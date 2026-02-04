@@ -85,6 +85,8 @@ def generate_docs_dev(
     modules: List[str] = ["app"] + [f"plugins.{p}" for p in active_plugins]
 
     cmd: List[str] = [
+        sys.executable,  # Используем текущий интерпретатор Python
+        "-m",
         "pdoc",
         "--docformat",
         "google",
