@@ -1,0 +1,54 @@
+{% extends "layouts/base-fullscreen.html" %}
+
+{% block title %}{{ _('Documentation') }}{% endblock %}
+
+{% block content %}
+<section class="vh-100">
+  <div class="container py-5 h-100">
+    <div class="row d-flex justify-content-center align-items-start h-100">
+      <div class="col-12 col-md-10 col-lg-8 col-xl-7">
+        <div class="card shadow-2-strong" style="border-radius: 1rem;">
+          <div class="card-body p-4 p-md-5">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+              <h3 class="fw-bold mb-0">{{ _('Documentation') }} - {{ _('All files') }}</h3>
+              <div>
+                <a href="{{ url_for('Docs.docs_index') }}" class="btn btn-outline-primary btn-sm me-2">
+                  <i class="fas fa-home me-1"></i>{{ _('Main page') }}
+                </a>
+                <a href="/" class="btn btn-outline-secondary btn-sm">
+                  <i class="fas fa-arrow-left me-1"></i>{{ _('Back') }}
+                </a>
+              </div>
+            </div>
+
+            {% if files %}
+            <ul class="list-group">
+              {% for file in files %}
+              <li class="list-group-item d-flex justify-content-between align-items-center">
+                <div>
+                  <a href="{{ url_for('Docs.docs_view', filename=file.name) }}" class="fw-semibold">
+                    {{ file.title }}
+                  </a>
+                  <div class="small text-muted">
+                    {{ file.name }}
+                  </div>
+                </div>
+                <a href="{{ url_for('Docs.docs_view', filename=file.name) }}" class="btn btn-sm btn-primary">
+                  <i class="fas fa-book-open me-1"></i>{{ _('Open') }}
+                </a>
+              </li>
+              {% endfor %}
+            </ul>
+            {% else %}
+            <p class="text-muted mb-0">
+              {{ _('No documentation files found in docs folder.') }}
+            </p>
+            {% endif %}
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+{% endblock %}
+

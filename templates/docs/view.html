@@ -1,0 +1,118 @@
+{% extends "layouts/base-fullscreen.html" %}
+
+{% block title %}{{ filename }} - {{ _('Documentation') }}{% endblock %}
+
+{% block content %}
+<section class="vh-100">
+  <div class="container py-4 py-md-5 h-100">
+    <div class="row d-flex justify-content-center align-items-start h-100">
+      <div class="col-12 col-md-10 col-lg-8 col-xl-8">
+        <div class="card shadow-2-strong" style="border-radius: 1rem;">
+          <div class="card-body p-4 p-md-5">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+              <div>
+                <h4 class="fw-bold mb-0">{{ _('Documentation') }}</h4>
+                <div class="small text-muted">{{ filename }}</div>
+              </div>
+              <div>
+                <a href="{{ url_for('Docs.docs_list') }}" class="btn btn-outline-info btn-sm me-2">
+                  <i class="fas fa-list me-1"></i>{{ _('All files') }}
+                </a>
+                <a href="{{ url_for('Docs.docs_index') }}" class="btn btn-outline-secondary btn-sm">
+                  <i class="fas fa-arrow-left me-1"></i>{{ _('Back') }}
+                </a>
+              </div>
+            </div>
+
+            <hr class="mb-4" />
+
+            <div class="markdown-body">
+              {{ content_html|safe }}
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Mermaid.js для отображения flowchart и диаграмм -->
+<script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    const isDarkMode = document.documentElement.getAttribute('data-bs-theme') === 'dark' || 
+                       document.body.classList.contains('dark-mode') ||
+                       (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches);
+    const config = {
+      startOnLoad: false,
+      theme: isDarkMode ? 'dark' : 'default',
+      themeVariables: isDarkMode ? {
+        primaryColor: '#4a90e2',
+        primaryTextColor: '#fff',
+        primaryBorderColor: '#2e5c8a',
+        lineColor: '#4a90e2',
+        secondaryColor: '#2d2d2d',
+        tertiaryColor: '#1e1e1e',
+        background: '#1e1e1e',
+        textColor: '#d4d4d4'
+      } : {
+        primaryColor: '#4a90e2',
+        primaryTextColor: '#fff',
+        primaryBorderColor: '#2e5c8a',
+        lineColor: '#4a90e2',
+        secondaryColor: '#f0f0f0',
+        tertiaryColor: '#fff'
+      }
+    };
+    mermaid.initialize(config);
+    mermaid.run();
+  });
+</script>
+
+<style>
+  .markdown-body h1,
+  .markdown-body h2,
+  .markdown-body h3,
+  .markdown-body h4 {
+    margin-top: 1.5rem;
+    margin-bottom: 0.75rem;
+  }
+  .markdown-body p {
+    margin-bottom: 0.5rem;
+  }
+  .markdown-body pre {
+    padding: 0.75rem;
+    background: #1e1e1e;
+    color: #f5f5f5;
+    border-radius: 0.5rem;
+    overflow-x: auto;
+  }
+  .markdown-body code {
+    background: rgba(15, 15, 15, 0.05);
+    padding: 0.1rem 0.25rem;
+    border-radius: 0.25rem;
+  }
+  .markdown-body table {
+    width: 100%;
+    margin-bottom: 1rem;
+  }
+  .markdown-body table th,
+  .markdown-body table td {
+    padding: 0.5rem;
+    border: 1px solid rgba(0, 0, 0, 0.1);
+  }
+  .markdown-body .mermaid {
+    margin: 1.5rem 0;
+    text-align: center;
+    background: #f8f9fa;
+    padding: 1rem;
+    border-radius: 0.5rem;
+    overflow-x: auto;
+  }
+  [data-bs-theme="dark"] .markdown-body .mermaid,
+  .dark-mode .markdown-body .mermaid {
+    background: #1e1e1e;
+  }
+</style>
+{% endblock %}
+

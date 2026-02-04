@@ -1,0 +1,89 @@
+{% extends "layouts/module_admin.html" %}
+
+{% block title %} {{ _('Documentation') }} {% endblock %}
+
+{% block breadcrumb %}
+<li class="breadcrumb-item active">{{ _('Documentation') }}</li>
+{% endblock breadcrumb %}
+
+{% block module %}
+<div class="row">
+  <div class="col-12">
+    <div class="card">
+      <div class="card-header">
+        <h5 class="card-title mb-0">
+          <i class="fas fa-book me-2"></i>{{ _('Documentation') }}
+        </h5>
+      </div>
+      <div class="card-body">
+        <p class="text-muted mb-4">
+          {{ _('Browse project documentation files. Click on any document to view its contents.') }}
+        </p>
+
+        <div class="d-flex flex-wrap gap-2 mb-3">
+          <a class="btn btn-outline-primary btn-sm" href="/docs">
+            <i class="fas fa-book-open me-1"></i>{{ _('Open docs') }}
+          </a>
+          <a class="btn btn-outline-info btn-sm" href="/docs/list">
+            <i class="fas fa-list me-1"></i>{{ _('All files') }}
+          </a>
+          {% if has_docs_dev %}
+          <a class="btn btn-outline-secondary btn-sm" href="/docs_dev/" target="_blank">
+            <i class="fas fa-code me-1"></i>{{ _('Dev docs (pdoc)') }}
+          </a>
+          {% else %}
+          <span class="small text-muted align-self-center">
+            {{ _('Dev docs not generated yet.') }}
+          </span>
+          {% endif %}
+
+          <form method="post" class="ms-auto">
+            <input type="hidden" name="action" value="generate_pdoc" />
+            <button type="submit" class="btn btn-success btn-sm">
+              <i class="fas fa-gear me-1"></i>{{ _('Generate pdoc') }}
+            </button>
+          </form>
+        </div>
+
+        {% if status_message %}
+          {% if status_ok %}
+            <div class="alert alert-success">
+              <i class="fas fa-check-circle me-2"></i>
+              <pre class="mb-0" style="white-space: pre-wrap;">{{ status_message }}</pre>
+            </div>
+          {% else %}
+            <div class="alert alert-danger">
+              <i class="fas fa-triangle-exclamation me-2"></i>
+              <pre class="mb-0" style="white-space: pre-wrap;">{{ status_message }}</pre>
+            </div>
+          {% endif %}
+        {% endif %}
+
+        <div class="small text-muted mb-3">
+          {{ _('Docs directory') }}: <code>{{ docs_dir }}</code> · {{ _('Files') }}: <b>{{ docs_count }}</b>
+        </div>
+        
+        {% if docs_files %}
+        <div class="list-group">
+          {% for doc in docs_files %}
+          <a href="{{ doc.url }}" class="list-group-item list-group-item-action">
+            <div class="d-flex w-100 justify-content-between">
+              <h6 class="mb-1">
+                <i class="fas fa-file-alt me-2"></i>{{ doc.title }}
+              </h6>
+              <small class="text-muted">{{ doc.filename }}</small>
+            </div>
+          </a>
+          {% endfor %}
+        </div>
+        {% else %}
+        <div class="alert alert-info">
+          <i class="fas fa-info-circle me-2"></i>
+          {{ _('No documentation files found.') }}
+        </div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
