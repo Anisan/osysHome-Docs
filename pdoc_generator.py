@@ -8,6 +8,7 @@ independently from the core application.
 from __future__ import annotations
 
 import os
+import sys
 import subprocess
 from typing import Callable, Optional, Tuple, List, Dict
 
