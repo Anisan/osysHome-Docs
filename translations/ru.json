@@ -1,0 +1,12 @@
+{
+  "All files": "Все файлы",
+  "Browse project documentation files. Click on any document to view its contents.": "Просматривайте файлы документации проекта. Нажмите на документ для просмотра содержимого.",
+  "Dev docs (pdoc)": "Документация разработчика (pdoc)",
+  "Dev docs not generated yet.": "Документация разработчика ещё не сгенерирована.",
+  "Docs directory": "Каталог документации",
+  "Generate pdoc": "Сгенерировать pdoc",
+  "Main page": "Главная страница",
+  "No documentation files found in docs folder.": "Файлы документации не найдены в папке docs.",
+  "No documentation files found.": "Файлы документации не найдены.",
+  "Open docs": "Открыть документацию"
+}

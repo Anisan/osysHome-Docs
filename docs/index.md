@@ -17,6 +17,8 @@
 ### Architecture / Архитектура
 
 - `ARCHITECTURE.md` — high‑level architecture, main components and data flow.
+- `CORE_RUNTIME.md` — core runtime components: configuration, scheduler, notifications, utils API.
+- `WEBSOCKET_UI_BINDINGS.md` — bind property values to UI elements via WebSocket (`data-prop-*`), auto-subscribe.
 - `PARAMS_DOCUMENTATION.md` — detailed documentation of property `params` and validation.
 - `ENUM_TYPE_USAGE.md` — how to use `enum` properties.
 - `MIGRATION_ENUM_VALUES.md` — enum migration details and rationale.
