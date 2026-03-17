@@ -1,0 +1,140 @@
+{% extends "layouts/base-fullscreen.html" %}
+
+{% block title %}{{ query and (query + ' - ') or '' }}{{ _('Search') }} - {{ _('Documentation') }}{% endblock %}
+
+{% block content %}
+<section class="py-3">
+  <div class="container-fluid px-3 h-100">
+    <div class="d-flex justify-content-between align-items-center mb-2 flex-wrap gap-2">
+      <h4 class="fw-bold mb-0">{{ _('Documentation') }}</h4>
+      <div class="d-flex align-items-center gap-2 flex-wrap">
+        <a href="{{ url_for('Docs.docs_home') }}" class="btn btn-outline-secondary btn-sm">
+          <i class="fas fa-home me-1"></i>{{ _('Main page') }}
+        </a>
+        <a href="/" class="btn btn-outline-secondary btn-sm">{{ _('Back') }}</a>
+      </div>
+    </div>
+
+    <div class="row g-3" style="min-height: calc(100vh - 8rem);">
+      {# Left: categories tree (same as home) #}
+      <div class="col-12 col-md-4 col-lg-3">
+        <div class="card shadow-sm h-100">
+          <div class="card-header py-2">
+            <h6 class="mb-0">{{ _('Categories') }}</h6>
+          </div>
+          <div class="card-body p-0 overflow-auto" style="max-height: calc(100vh - 12rem);">
+            <div class="px-2 py-2 border-bottom">
+              <input type="text" id="docs-tree-filter" class="form-control form-control-sm" placeholder="{{ _('Filter tree...') }}" autocomplete="off" />
+            </div>
+            <div class="accordion accordion-flush" id="docs-categories-accordion">
+              {% for cat in tree %}
+              <div class="accordion-item border-0 border-bottom docs-tree-cat" data-cat-heading="{{ cat.heading|lower }}">
+                <h2 class="accordion-header d-flex align-items-stretch">
+                  <button class="accordion-button collapsed py-2 shadow-none small flex-grow-1 text-start" type="button" data-bs-toggle="collapse" data-bs-target="#cat-{{ cat.source_id }}" aria-expanded="false" aria-controls="cat-{{ cat.source_id }}">
+                    <i class="fas fa-chevron-right accordion-arrow me-2" style="transition: transform 0.2s; width: 0.6rem;"></i>
+                    <img src="{{ cat.icon_url }}" alt="" class="me-2 docs-cat-icon" height="20" width="20" style="object-fit: contain;" onerror="this.src='{{ config.ASSETS_ROOT }}/images/module.png'">
+                    <span class="docs-cat-label">{{ cat.heading }}</span>
+                  </button>
+                  <a href="{{ url_for('Docs.docs_home', category=cat.source_id) }}" class="badge bg-secondary rounded-pill align-self-center me-2 text-decoration-none docs-tree-badge docs-tree-badge-sm" title="{{ _('Show list in center') }}">{{ cat.documents|length }}</a>
+                </h2>
+                <div id="cat-{{ cat.source_id }}" class="accordion-collapse collapse">
+                  <div class="accordion-body py-1 ps-3 pt-0">
+                    <ul class="list-unstyled mb-0 docs-tree-files">
+                      {% for doc in cat.documents %}
+                      <li class="py-1 docs-tree-file ms-3" data-doc-title="{{ doc.title|lower }}">
+                        <a href="{{ doc.home_url }}" class="text-decoration-none small">
+                          <i class="fas fa-file-alt me-1 opacity-75"></i>{{ doc.title }}
+                        </a>
+                      </li>
+                      {% endfor %}
+                    </ul>
+                  </div>
+                </div>
+              </div>
+              {% endfor %}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {# Center: search form and results #}
+      <div class="col-12 col-md-8 col-lg-9">
+        <div class="card shadow-sm h-100">
+          <div class="card-body overflow-auto" style="max-height: calc(100vh - 12rem);">
+            <h5 class="card-title mb-4">{{ _('Search documentation') }}</h5>
+
+            <form method="get" action="{{ url_for('Docs.docs_search') }}" class="mb-4">
+              <div class="input-group">
+                <input type="text" name="q" class="form-control" value="{{ query }}" placeholder="{{ _('Search in titles and content...') }}" />
+                <button type="submit" class="btn btn-primary"><i class="fas fa-search me-1"></i>{{ _('Search') }}</button>
+              </div>
+            </form>
+
+            {% if query %}
+              {% if results %}
+                <p class="text-muted small mb-3">{{ results|length }} {{ _('result(s)') }}</p>
+                <div class="list-group list-group-flush">
+                  {% for r in results %}
+                  <a href="{{ r.url }}" class="list-group-item list-group-item-action">
+                    <div class="fw-semibold">{{ r.title }}</div>
+                    {% if r.snippet %}
+                      <div class="small mt-1">{{ r.snippet|safe }}</div>
+                    {% endif %}
+                    <div class="small text-muted">{{ r.source_id }} / {{ r.path }}</div>
+                  </a>
+                  {% endfor %}
+                </div>
+              {% else %}
+                <p class="text-muted">{{ _('No results found.') }}</p>
+              {% endif %}
+            {% else %}
+              <p class="text-muted">{{ _('Enter a search query above.') }}</p>
+            {% endif %}
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<style>
+  #docs-categories-accordion .accordion-button { font-size: 0.875rem; }
+  #docs-categories-accordion .accordion-button::after { display: none; }
+  #docs-categories-accordion .accordion-button:not(.collapsed) .accordion-arrow { transform: rotate(90deg); }
+  .docs-tree-badge:hover { opacity: 0.9; }
+  .docs-tree-badge-sm { font-size: 0.65rem; padding: 0.15em 0.4em; }
+  .docs-tree-cat.docs-filter-hidden { display: none !important; }
+  .docs-tree-file.docs-filter-hidden { display: none !important; }
+</style>
+{% endblock %}
+
+{% block javascripts %}
+<script src="{{ config.ASSETS_ROOT }}/plugins/bootstrap/js/bootstrap.bundle.min.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  var accordionEl = document.getElementById('docs-categories-accordion');
+  if (!accordionEl) return;
+
+  function applyTreeFilter() {
+    var q = (document.getElementById('docs-tree-filter').value || '').trim().toLowerCase();
+    accordionEl.querySelectorAll('.docs-tree-cat').forEach(function(catEl) {
+      var heading = (catEl.getAttribute('data-cat-heading') || '');
+      var fileEls = catEl.querySelectorAll('.docs-tree-file');
+      var visibleFiles = 0;
+      fileEls.forEach(function(li) {
+        var title = (li.getAttribute('data-doc-title') || '');
+        var match = !q || heading.indexOf(q) !== -1 || title.indexOf(q) !== -1;
+        li.classList.toggle('docs-filter-hidden', !match);
+        if (match) visibleFiles++;
+      });
+      catEl.classList.toggle('docs-filter-hidden', !q ? false : visibleFiles === 0 && heading.indexOf(q) === -1);
+    });
+  }
+  var filterInput = document.getElementById('docs-tree-filter');
+  if (filterInput) {
+    filterInput.addEventListener('input', applyTreeFilter);
+    filterInput.addEventListener('keyup', applyTreeFilter);
+  }
+});
+</script>
+{% endblock %}

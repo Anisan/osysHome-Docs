@@ -1,5 +1,17 @@
 {
   "All files": "Все файлы",
+  "Back": "Назад",
+  "Categories": "Категории",
+  "Select a category.": "Выберите категорию.",
+  "Select a document from the list.": "Выберите документ из списка.",
+  "Select a category or a document from the list.": "Выберите категорию или документ из списка.",
+  "List of documents in this category. Click a document to open it.": "Документы этой категории. Нажмите на документ, чтобы открыть.",
+  "List of files": "Список файлов",
+  "Open in new tab": "Открыть в новой вкладке",
+  "Expand/collapse": "Развернуть/свернуть",
+  "Filter tree...": "Фильтр дерева...",
+  "Show list in center": "Показать список в центре",
+  "Browse documentation by section.": "Выберите раздел документации.",
   "Browse project documentation files. Click on any document to view its contents.": "Просматривайте файлы документации проекта. Нажмите на документ для просмотра содержимого.",
   "Dev docs (pdoc)": "Документация разработчика (pdoc)",
   "Dev docs not generated yet.": "Документация разработчика ещё не сгенерирована.",
@@ -8,5 +20,13 @@
   "Main page": "Главная страница",
   "No documentation files found in docs folder.": "Файлы документации не найдены в папке docs.",
   "No documentation files found.": "Файлы документации не найдены.",
-  "Open docs": "Открыть документацию"
+  "No results found.": "Ничего не найдено.",
+  "Open": "Открыть",
+  "Open docs": "Открыть документацию",
+  "Refresh index": "Обновить индекс",
+  "result(s)": "результат(ов)",
+  "Search": "Поиск",
+  "Search documentation": "Поиск по документации",
+  "Search in titles and content...": "Поиск по заголовкам и тексту...",
+  "Search...": "Поиск..."
 }

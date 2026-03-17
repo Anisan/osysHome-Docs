@@ -1,5 +1,17 @@
 {
   "All files": "All files",
+  "Back": "Back",
+  "Categories": "Categories",
+  "Select a category.": "Select a category.",
+  "Select a document from the list.": "Select a document from the list.",
+  "Select a category or a document from the list.": "Select a category or a document from the list.",
+  "List of documents in this category. Click a document to open it.": "List of documents in this category. Click a document to open it.",
+  "List of files": "List of files",
+  "Open in new tab": "Open in new tab",
+  "Expand/collapse": "Expand/collapse",
+  "Filter tree...": "Filter tree...",
+  "Show list in center": "Show list in center",
+  "Browse documentation by section.": "Browse documentation by section.",
   "Browse project documentation files. Click on any document to view its contents.": "Browse project documentation files. Click on any document to view its contents.",
   "Dev docs (pdoc)": "Dev docs (pdoc)",
   "Dev docs not generated yet.": "Dev docs not generated yet.",
@@ -8,5 +20,13 @@
   "Main page": "Main page",
   "No documentation files found in docs folder.": "No documentation files found in docs folder.",
   "No documentation files found.": "No documentation files found.",
-  "Open docs": "Open docs"
+  "No results found.": "No results found.",
+  "Open": "Open",
+  "Open docs": "Open docs",
+  "Refresh index": "Refresh index",
+  "result(s)": "result(s)",
+  "Search": "Search",
+  "Search documentation": "Search documentation",
+  "Search in titles and content...": "Search in titles and content...",
+  "Search...": "Search..."
 }

@@ -9,16 +9,17 @@
       <div class="col-12 col-md-10 col-lg-8 col-xl-8">
         <div class="card shadow-2-strong" style="border-radius: 1rem;">
           <div class="card-body p-4 p-md-5">
-            <div class="d-flex justify-content-between align-items-center mb-4">
+            <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
               <div>
                 <h4 class="fw-bold mb-0">{{ _('Documentation') }}</h4>
-                <div class="small text-muted">{{ filename }}</div>
+                <div class="small text-muted">{% if source_id %}{{ source_id }} / {% endif %}{{ filename }}</div>
               </div>
-              <div>
-                <a href="{{ url_for('Docs.docs_list') }}" class="btn btn-outline-info btn-sm me-2">
-                  <i class="fas fa-list me-1"></i>{{ _('All files') }}
-                </a>
-                <a href="{{ url_for('Docs.docs_index') }}" class="btn btn-outline-secondary btn-sm">
+              <div class="d-flex align-items-center gap-2 flex-wrap">
+                <form method="get" action="{{ url_for('Docs.docs_search') }}" class="d-flex">
+                  <input type="text" name="q" class="form-control form-control-sm" style="width: 10rem;" placeholder="{{ _('Search...') }}" />
+                  <button type="submit" class="btn btn-outline-secondary btn-sm ms-1"><i class="fas fa-search"></i></button>
+                </form>
+                <a href="{{ url_for('Docs.docs_home') }}" class="btn btn-outline-secondary btn-sm">
                   <i class="fas fa-arrow-left me-1"></i>{{ _('Back') }}
                 </a>
               </div>

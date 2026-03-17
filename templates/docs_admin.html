@@ -16,33 +16,171 @@
         </h5>
       </div>
       <div class="card-body">
-        <p class="text-muted mb-4">
-          {{ _('Browse project documentation files. Click on any document to view its contents.') }}
-        </p>
+        <div class="d-flex flex-wrap justify-content-between align-items-start gap-3 mb-3">
+          <div>
+            <div class="text-muted">
+              {{ _('Browse project documentation, search across modules, and generate developer docs.') }}
+            </div>
+            <div class="small text-muted mt-1">
+              {{ _('Index is built lazily on first access to /docs or /docs/search.') }}
+            </div>
+          </div>
+          <div class="d-flex flex-wrap gap-2">
+            <a class="btn btn-outline-primary btn-sm" href="/docs">
+              <i class="fas fa-book-open me-1"></i>{{ _('Open docs') }}
+            </a>
+            <a class="btn btn-outline-secondary btn-sm" href="{{ url_for('Docs.docs_search') }}">
+              <i class="fas fa-search me-1"></i>{{ _('Search') }}
+            </a>
+            {% if has_docs_dev %}
+              <a class="btn btn-outline-secondary btn-sm" href="/docs_dev/" target="_blank">
+                <i class="fas fa-code me-1"></i>{{ _('Dev docs (pdoc)') }}
+              </a>
+            {% endif %}
+          </div>
+        </div>
 
-        <div class="d-flex flex-wrap gap-2 mb-3">
-          <a class="btn btn-outline-primary btn-sm" href="/docs">
-            <i class="fas fa-book-open me-1"></i>{{ _('Open docs') }}
-          </a>
-          <a class="btn btn-outline-info btn-sm" href="/docs/list">
-            <i class="fas fa-list me-1"></i>{{ _('All files') }}
-          </a>
-          {% if has_docs_dev %}
-          <a class="btn btn-outline-secondary btn-sm" href="/docs_dev/" target="_blank">
-            <i class="fas fa-code me-1"></i>{{ _('Dev docs (pdoc)') }}
-          </a>
-          {% else %}
-          <span class="small text-muted align-self-center">
-            {{ _('Dev docs not generated yet.') }}
-          </span>
-          {% endif %}
+        <div class="row g-3">
+          <div class="col-12 col-lg-5">
+            <div class="card border-0 bg-body-tertiary h-100">
+              <div class="card-body">
+                <h6 class="mb-3"><i class="fas fa-sliders-h me-2"></i>{{ _('Actions') }}</h6>
+                <div class="d-flex flex-column gap-2">
+                  <form method="post" class="d-inline">
+                    <input type="hidden" name="action" value="refresh_index" />
+                    <button type="submit" class="btn btn-outline-warning w-100">
+                      <i class="fas fa-sync-alt me-1"></i>{{ _('Refresh index') }}
+                      <div class="small text-muted mt-1">{{ _('Re-scan docs and rebuild search index.') }}</div>
+                    </button>
+                  </form>
 
-          <form method="post" class="ms-auto">
-            <input type="hidden" name="action" value="generate_pdoc" />
-            <button type="submit" class="btn btn-success btn-sm">
-              <i class="fas fa-gear me-1"></i>{{ _('Generate pdoc') }}
-            </button>
-          </form>
+                  <form method="post" class="d-inline">
+                    <input type="hidden" name="action" value="generate_pdoc" />
+                    <button type="submit" class="btn btn-success w-100">
+                      <i class="fas fa-gear me-1"></i>{{ _('Generate pdoc') }}
+                      <div class="small opacity-75 mt-1">{{ _('Generate developer API documentation into docs_dev/.') }}</div>
+                    </button>
+                  </form>
+                </div>
+
+                <div class="mt-3">
+                  <div class="d-flex justify-content-between align-items-center mb-1">
+                    <div class="fw-semibold small">{{ _('Index build progress') }}</div>
+                    <div class="small text-muted" id="docs-progress-status">
+                      {% if index_progress and index_progress.status %}{{ index_progress.status }}{% else %}idle{% endif %}
+                    </div>
+                  </div>
+                  <div class="progress" style="height: 0.6rem;">
+                    <div
+                      id="docs-progress-bar"
+                      class="progress-bar"
+                      role="progressbar"
+                      style="width: 0%;"
+                      aria-valuenow="0"
+                      aria-valuemin="0"
+                      aria-valuemax="100"
+                    ></div>
+                  </div>
+                  <div class="small text-muted mt-2" id="docs-progress-message">
+                    {% if index_progress and index_progress.message %}{{ index_progress.message }}{% else %}{{ _('Idle') }}{% endif %}
+                  </div>
+                  <div class="small text-muted" id="docs-progress-updated">
+                    {% if index_progress and index_progress.updated_at %}{{ index_progress.updated_at }}{% endif %}
+                  </div>
+                </div>
+
+                <hr class="my-3" />
+                <div class="small text-muted">
+                  <div class="fw-semibold text-body mb-1">{{ _('Notes') }}</div>
+                  <ul class="mb-0 ps-3">
+                    <li>{{ _('Disabled modules are not scanned.') }}</li>
+                    <li>{{ _('If Whoosh is not installed, search falls back to title/excerpt match.') }}</li>
+                    <li>{{ _('After updating docs files, use “Refresh index”.') }}</li>
+                  </ul>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="col-12 col-lg-7">
+            <div class="card border-0 bg-body-tertiary h-100">
+              <div class="card-body">
+                <h6 class="mb-3"><i class="fas fa-database me-2"></i>{{ _('Index status') }}</h6>
+
+                <div class="row g-2 small">
+                  <div class="col-12 col-md-6">
+                    <div class="p-2 bg-body rounded border">
+                      <div class="text-muted">{{ _('Documents') }}</div>
+                      <div class="fs-5 fw-bold">{{ index_info.docs_count if index_info else 0 }}</div>
+                      <div class="text-muted small">
+                        {{ _('Last build') }}:
+                        <span class="fw-semibold">{{ (index_info.built_at if index_info and index_info.built_at else _('Not built yet')) }}</span>
+                      </div>
+                    </div>
+                  </div>
+                  <div class="col-12 col-md-6">
+                    <div class="p-2 bg-body rounded border">
+                      <div class="text-muted">Whoosh</div>
+                      <div class="d-flex align-items-center justify-content-between">
+                        <div class="fw-semibold">
+                          {% if index_info and index_info.whoosh and index_info.whoosh.installed %}
+                            {{ _('Installed') }}
+                          {% else %}
+                            {{ _('Not installed') }}
+                          {% endif %}
+                        </div>
+                        {% if index_info and index_info.whoosh and index_info.whoosh.installed %}
+                          {% if index_info.whoosh.ready %}
+                            <span class="badge bg-success">{{ _('Ready') }}</span>
+                          {% else %}
+                            <span class="badge bg-warning text-dark">{{ _('Not ready') }}</span>
+                          {% endif %}
+                        {% else %}
+                          <span class="badge bg-secondary">{{ _('Fallback') }}</span>
+                        {% endif %}
+                      </div>
+                      {% if index_info and index_info.whoosh and index_info.whoosh.installed %}
+                        <div class="text-muted small mt-1">
+                          {{ _('Files') }}: <span class="fw-semibold">{{ index_info.whoosh.files }}</span>,
+                          {{ _('Size') }}: <span class="fw-semibold">{{ (index_info.whoosh.bytes / 1024)|round(1) }} KB</span>
+                        </div>
+                      {% endif %}
+                    </div>
+                  </div>
+                </div>
+
+                {% if index_info and index_info.whoosh and index_info.whoosh.dir %}
+                  <div class="mt-3">
+                    <div class="text-muted small mb-1">{{ _('Index directory') }}</div>
+                    <code class="small">{{ index_info.whoosh.dir }}</code>
+                  </div>
+                {% endif %}
+                {% if index_info and index_info.whoosh and index_info.whoosh.error %}
+                  <div class="mt-2 text-danger small">
+                    <i class="fas fa-triangle-exclamation me-1"></i>{{ index_info.whoosh.error }}
+                  </div>
+                {% endif %}
+
+                {% if index_info and index_info.docs_by_source %}
+                  <hr class="my-3" />
+                  <div class="d-flex justify-content-between align-items-center mb-2">
+                    <div class="fw-semibold">{{ _('Sources') }}</div>
+                    <div class="text-muted small">{{ _('documents per module') }}</div>
+                  </div>
+                  <div class="row g-2">
+                    {% for sid, cnt in index_info.docs_by_source|dictsort(false, 'value')|reverse %}
+                      <div class="col-12 col-md-6">
+                        <div class="d-flex justify-content-between p-2 bg-body rounded border">
+                          <span class="text-truncate me-2">{{ sid }}</span>
+                          <span class="badge bg-secondary">{{ cnt }}</span>
+                        </div>
+                      </div>
+                    {% endfor %}
+                  </div>
+                {% endif %}
+              </div>
+            </div>
+          </div>
         </div>
 
         {% if status_message %}
@@ -59,31 +197,60 @@
           {% endif %}
         {% endif %}
 
-        <div class="small text-muted mb-3">
-          {{ _('Docs directory') }}: <code>{{ docs_dir }}</code> · {{ _('Files') }}: <b>{{ docs_count }}</b>
-        </div>
-        
-        {% if docs_files %}
-        <div class="list-group">
-          {% for doc in docs_files %}
-          <a href="{{ doc.url }}" class="list-group-item list-group-item-action">
-            <div class="d-flex w-100 justify-content-between">
-              <h6 class="mb-1">
-                <i class="fas fa-file-alt me-2"></i>{{ doc.title }}
-              </h6>
-              <small class="text-muted">{{ doc.filename }}</small>
-            </div>
-          </a>
-          {% endfor %}
-        </div>
-        {% else %}
-        <div class="alert alert-info">
-          <i class="fas fa-info-circle me-2"></i>
-          {{ _('No documentation files found.') }}
-        </div>
-        {% endif %}
       </div>
     </div>
   </div>
 </div>
+{% endblock %}
+
+{% block javascripts %}
+{{ super() }}
+<script>
+  (function() {
+    function clamp(n, min, max) { return Math.max(min, Math.min(max, n)); }
+    function setProgress(pct, cls) {
+      var bar = document.getElementById('docs-progress-bar');
+      if (!bar) return;
+      pct = clamp(pct, 0, 100);
+      bar.style.width = pct + '%';
+      bar.setAttribute('aria-valuenow', String(pct));
+      bar.className = 'progress-bar' + (cls ? (' ' + cls) : '');
+    }
+    function setText(id, text) {
+      var el = document.getElementById(id);
+      if (el) el.textContent = text || '';
+    }
+
+    async function poll() {
+      try {
+        const resp = await fetch('{{ url_for("Docs.docs_index_status") }}', { cache: 'no-store' });
+        const data = await resp.json();
+        const p = (data && data.index_progress) || { status: 'idle' };
+        setText('docs-progress-status', p.status || 'idle');
+        setText('docs-progress-message', p.message || '');
+        setText('docs-progress-updated', p.updated_at || '');
+
+        var pct = 0;
+        if (p.total && p.processed != null && p.total > 0) {
+          pct = Math.round((p.processed / p.total) * 100);
+        } else if (p.phase === 'scan' && p.processed != null) {
+          // Unknown total during scan — show "activity" by cycling
+          pct = (Date.now() / 250) % 100;
+        } else if (p.status === 'done') {
+          pct = 100;
+        }
+        if (p.status === 'error') setProgress(100, 'bg-danger');
+        else if (p.status === 'done') setProgress(100, 'bg-success');
+        else if (p.status === 'running') setProgress(pct, 'progress-bar-striped progress-bar-animated');
+        else setProgress(0, '');
+
+        if (p.status === 'running') setTimeout(poll, 1000);
+        else setTimeout(poll, 5000);
+      } catch (e) {
+        setTimeout(poll, 5000);
+      }
+    }
+    poll();
+  })();
+</script>
 {% endblock %}
