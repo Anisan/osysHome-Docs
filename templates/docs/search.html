@@ -1,24 +1,19 @@
-{% extends "layouts/base-fullscreen.html" %}
+{% extends "docs/base_docs.html" %}
 
-{% block title %}{{ query and (query + ' - ') or '' }}{{ _('Search') }} - {{ _('Documentation') }}{% endblock %}
+{% block docs_page_title %}{{ query and (query + ' - ') or '' }}{{ _('Search') }} - {{ _('Documentation') }}{% endblock %}
 
-{% block content %}
-<section class="py-3">
-  <div class="container-fluid px-3 h-100">
-    <div class="d-flex justify-content-between align-items-center mb-2 flex-wrap gap-2">
-      <h4 class="fw-bold mb-0">{{ _('Documentation') }}</h4>
-      <div class="d-flex align-items-center gap-2 flex-wrap">
-        <a href="{{ url_for('Docs.docs_home') }}" class="btn btn-outline-secondary btn-sm">
-          <i class="fas fa-home me-1"></i>{{ _('Main page') }}
-        </a>
-        <a href="/" class="btn btn-outline-secondary btn-sm">{{ _('Back') }}</a>
-      </div>
-    </div>
+{% block docs_header_actions %}
+  <a href="{{ url_for('Docs.docs_home') }}" class="btn btn-outline-secondary btn-sm">
+    <i class="fas fa-home me-1"></i>{{ _('Main page') }}
+  </a>
+  <a href="/" class="btn btn-outline-secondary btn-sm">{{ _('Back') }}</a>
+{% endblock %}
 
+{% block docs_main %}
     <div class="row g-3" style="min-height: calc(100vh - 8rem);">
       {# Left: categories tree (same as home) #}
-      <div class="col-12 col-md-4 col-lg-3">
-        <div class="card shadow-sm h-100">
+      <div class="col-12 col-md-4 col-lg-3 docs-side-column">
+        <div class="card shadow-sm docs-side-card">
           <div class="card-header py-2">
             <h6 class="mb-0">{{ _('Categories') }}</h6>
           </div>
@@ -94,9 +89,10 @@
         </div>
       </div>
     </div>
-  </div>
-</section>
+{% endblock %}
 
+{% block stylesheets %}
+{{ super() }}
 <style>
   #docs-categories-accordion .accordion-button { font-size: 0.875rem; }
   #docs-categories-accordion .accordion-button::after { display: none; }
@@ -105,10 +101,31 @@
   .docs-tree-badge-sm { font-size: 0.65rem; padding: 0.15em 0.4em; }
   .docs-tree-cat.docs-filter-hidden { display: none !important; }
   .docs-tree-file.docs-filter-hidden { display: none !important; }
+
+  .docs-side-column {
+    position: sticky;
+    top: 4.5rem;
+    align-self: flex-start;
+  }
+
+  .docs-side-card {
+    max-height: calc(100vh - 2.5rem);
+  }
+
+  @media (max-width: 991.98px) {
+    .docs-side-column {
+      position: static;
+      top: auto;
+    }
+    .docs-side-card {
+      max-height: none;
+    }
+  }
 </style>
 {% endblock %}
 
 {% block javascripts %}
+{{ super() }}
 <script src="{{ config.ASSETS_ROOT }}/plugins/bootstrap/js/bootstrap.bundle.min.js"></script>
 <script>
 document.addEventListener('DOMContentLoaded', function() {

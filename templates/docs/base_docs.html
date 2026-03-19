@@ -1,0 +1,79 @@
+{% extends "layouts/base-fullscreen.html" %}
+
+{# Base layout for Docs pages: sticky header with logo and common actions. #}
+
+{% block title %}
+  {% block docs_page_title %}{{ _('Documentation') }} osysHome{% endblock %}
+{% endblock %}
+
+{% block content %}
+<section class="pb-3">
+  <div class="container-fluid px-3 h-100">
+    <div class="docs-page-header mb-3">
+      <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
+        <div class="d-flex align-items-center gap-2">
+          <img src="{{ config.ASSETS_ROOT }}/images/logo.png" alt="osysHome" height="36" width="36" class="ms-3">
+          <div class="d-flex flex-column">
+            <h4 class="fw-bold mb-0">
+              {% block docs_header_title %}{{ _('Documentation') }} osysHome{% endblock %}
+            </h4>
+            {% block docs_header_subtitle %}{% endblock %}
+          </div>
+        </div>
+        <div class="d-flex align-items-center gap-2 flex-wrap">
+          {% block docs_header_actions %}
+            <form method="get" action="{{ url_for('Docs.docs_search') }}" class="d-flex">
+              <input type="text" name="q" class="form-control form-control-sm" style="width: 10rem;" placeholder="{{ _('Search...') }}" />
+              <button type="submit" class="btn btn-outline-secondary btn-sm ms-1"><i class="fas fa-search"></i></button>
+            </form>
+            <a href="/" class="btn btn-outline-secondary btn-sm">{{ _('Back') }}</a>
+          {% endblock %}
+        </div>
+      </div>
+    </div>
+
+    <div class="docs-main">
+      {% block docs_main %}{% endblock %}
+    </div>
+  </div>
+</section>
+{% endblock %}
+
+{% block stylesheets %}
+{{ super() }}
+<style>
+  .docs-page-header {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 1030;
+    margin: 0;
+    padding: 0.75rem 0 0.75rem;
+    background: var(--bs-body-bg);
+    border-bottom: 1px solid rgba(0, 0, 0, 0.08);
+  }
+
+  [data-bs-theme="dark"] .docs-page-header,
+  .dark-mode .docs-page-header {
+    border-bottom-color: rgba(255, 255, 255, 0.08);
+  }
+
+  .docs-main {
+    margin-top: 4.5rem;
+  }
+
+  @media (max-width: 767.98px) {
+    .docs-page-header {
+      padding: 0.5rem 0;
+    }
+  }
+</style>
+{% endblock %}
+
+{% block javascripts %}
+{{ super() }}
+{% block docs_page_javascripts %}{% endblock %}
+{% endblock %}
+
+

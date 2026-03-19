@@ -1,25 +1,13 @@
-{% extends "layouts/base-fullscreen.html" %}
+{% extends "docs/base_docs.html" %}
+{% from "docs/_doc_layout.html" import docs_doc_view, docs_doc_scripts, docs_doc_styles with context %}
 
-{% block title %}{{ doc_title or _('Documentation') }}{% endblock %}
+{% block docs_page_title %}{{ doc_title or (_('Documentation') ~ ' osysHome') }}{% endblock %}
 
-{% block content %}
-<section class="py-3">
-  <div class="container-fluid px-3 h-100">
-    <div class="d-flex justify-content-between align-items-center mb-2 flex-wrap gap-2">
-      <h4 class="fw-bold mb-0">{{ _('Documentation') }}</h4>
-      <div class="d-flex align-items-center gap-2 flex-wrap">
-        <form method="get" action="{{ url_for('Docs.docs_search') }}" class="d-flex">
-          <input type="text" name="q" class="form-control form-control-sm" style="width: 10rem;" placeholder="{{ _('Search...') }}" />
-          <button type="submit" class="btn btn-outline-secondary btn-sm ms-1"><i class="fas fa-search"></i></button>
-        </form>
-        <a href="/" class="btn btn-outline-secondary btn-sm">{{ _('Back') }}</a>
-      </div>
-    </div>
-
-    <div class="row g-3" style="min-height: calc(100vh - 8rem);">
+{% block docs_main %}
+    <div class="row g-3 align-items-start" style="min-height: calc(100vh - 8rem);">
       {# Left: collapsible tree (categories with files) #}
-      <div class="col-12 col-md-4 col-lg-3">
-        <div class="card shadow-sm h-100">
+      <div class="col-12 col-md-4 col-lg-3 docs-side-column">
+        <div class="card shadow-sm docs-side-card">
           <div class="card-header py-2">
             <h6 class="mb-0">{{ _('Categories') }}</h6>
           </div>
@@ -38,7 +26,7 @@
                   </button>
                   <a href="{{ url_for('Docs.docs_home', category=cat.source_id) }}" class="badge bg-secondary rounded-pill align-self-center me-2 text-decoration-none docs-tree-badge docs-tree-badge-sm" title="{{ _('Show list in center') }}">{{ cat.documents|length }}</a>
                 </h2>
-                <div id="cat-{{ cat.source_id }}" class="accordion-collapse collapse">
+                <div id="cat-{{ cat.source_id }}" class="accordion-collapse collapse" data-bs-parent="#docs-categories-accordion">
                   <div class="accordion-body py-1 ps-3 pt-0">
                     <ul class="list-unstyled mb-0 docs-tree-files">
                       {% for doc in cat.documents %}
@@ -60,20 +48,18 @@
 
       {# Center: document content, or category file list with descriptions, or placeholder #}
       <div class="col-12 col-md-8 col-lg-9">
-        <div class="card shadow-sm h-100">
-          <div class="card-body overflow-auto" style="max-height: calc(100vh - 12rem);">
+        <div class="card shadow-sm {% if not doc_content_html %}h-100{% endif %}">
+          <div class="card-body{% if not doc_content_html %} overflow-auto{% endif %}"{% if not doc_content_html %} style="max-height: calc(100vh - 12rem);"{% endif %}>
             {% if doc_content_html %}
               {# Open document #}
               <div class="d-flex justify-content-between align-items-start mb-3">
                 <h5 class="card-title mb-0">{{ doc_title }}</h5>
-                <a href="{{ url_for('Docs.docs_home', category=selected_category, file=selected_file) }}" class="btn btn-outline-secondary btn-sm" target="_blank" rel="noopener" title="{{ _('Open in new tab') }}">
+                <a href="{{ url_for('Docs.docs_view_by_source', source_id=selected_category, doc_path=selected_file) }}" class="btn btn-outline-secondary btn-sm" target="_blank" rel="noopener" title="{{ _('Open in new tab') }}">
                   <i class="fas fa-external-link-alt"></i>
                 </a>
               </div>
               <hr class="mb-3" />
-              <div class="markdown-body">
-                {{ doc_content_html|safe }}
-              </div>
+              {{ docs_doc_view(doc_content_html) }}
             {% elif selected_category %}
               {# List of files in category with descriptions #}
               <h5 class="card-title mb-3">{{ selected_heading }}</h5>
@@ -96,21 +82,12 @@
         </div>
       </div>
     </div>
-  </div>
-</section>
+{% endblock %}
 
-{% if doc_content_html %}
-<script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
-<script>
-  document.addEventListener('DOMContentLoaded', function() {
-    if (typeof mermaid !== 'undefined') {
-      var isDark = document.documentElement.getAttribute('data-bs-theme') === 'dark' || document.body.classList.contains('dark-mode') || (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches);
-      mermaid.initialize({ startOnLoad: false, theme: isDark ? 'dark' : 'default' });
-      mermaid.run();
-    }
-  });
-</script>
-{% endif %}
+{# Важно: код TOC должен быть внутри блока javascripts, иначе Jinja его выкинет. #}
+{% block stylesheets %}
+{{ super() }}
+<link rel="stylesheet" href="{{ config.ASSETS_ROOT }}/plugins/prism/prism.min.css">
 <style>
   #docs-categories-accordion .accordion-button { font-size: 0.875rem; }
   #docs-categories-accordion .accordion-button::after { display: none; }
@@ -122,17 +99,288 @@
   .docs-tree-badge-sm { font-size: 0.65rem; padding: 0.15em 0.4em; }
   .docs-tree-cat.docs-filter-hidden { display: none !important; }
   .docs-tree-file.docs-filter-hidden { display: none !important; }
-  .markdown-body h1,.markdown-body h2,.markdown-body h3,.markdown-body h4 { margin-top: 1.25rem; margin-bottom: 0.5rem; }
-  .markdown-body p { margin-bottom: 0.5rem; }
-  .markdown-body pre { padding: 0.75rem; background: #1e1e1e; color: #f5f5f5; border-radius: 0.5rem; overflow-x: auto; }
-  .markdown-body code { background: rgba(0,0,0,0.06); padding: 0.1rem 0.25rem; border-radius: 0.25rem; }
-  .markdown-body table { width: 100%; margin-bottom: 1rem; }
-  .markdown-body table th, .markdown-body table td { padding: 0.5rem; border: 1px solid rgba(0,0,0,0.1); }
-  .markdown-body .mermaid { margin: 1rem 0; text-align: center; }
+
+  .docs-side-column {
+    position: sticky;
+    top: 4.5rem;
+    align-self: flex-start;
+  }
+
+  .docs-side-card {
+    max-height: calc(100vh - 2.5rem);
+  }
+
+  {{ docs_doc_styles() }}
+
+  @media (max-width: 991.98px) {
+    .docs-side-column,
+    .docs-toc-column {
+      position: static;
+      top: auto;
+    }
+
+    .docs-side-card,
+    .docs-toc-card {
+      max-height: none;
+    }
+  }
 </style>
 {% endblock %}
 
 {% block javascripts %}
+{{ super() }}
+
+{# TOC + Mermaid только если есть открытый документ #}
+{% if doc_content_html %}
+<script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+<script>
+  (function(init) {
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', init);
+    } else {
+      init();
+    }
+  })(function() {
+    if (typeof mermaid !== 'undefined') {
+      var isDark = document.documentElement.getAttribute('data-bs-theme') === 'dark' ||
+                   document.body.classList.contains('dark-mode') ||
+                   (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches);
+      mermaid.initialize({ startOnLoad: false, theme: isDark ? 'dark' : 'default' });
+      mermaid.run();
+    }
+  });
+</script>
+
+<script src="{{ config.ASSETS_ROOT }}/plugins/prism/prism.min.js"></script>
+<script src="{{ config.ASSETS_ROOT }}/plugins/prism/prism-python.min.js"></script>
+<script src="{{ config.ASSETS_ROOT }}/plugins/prism/prism-python.min.js"></script>
+<script>
+  (function(init) {
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', init);
+    } else {
+      init();
+    }
+  })(function() {
+    function slugify(s) {
+      return (s || '')
+        .toString()
+        .trim()
+        .toLowerCase()
+        .replace(/[\u0300-\u036f]/g, '')
+        .replace(/[^a-z0-9\u0400-\u04ff\s_-]/g, '')
+        .replace(/[\s_]+/g, '-')
+        .replace(/-+/g, '-')
+        .replace(/^-|-$/g, '');
+    }
+
+    function uniqueId(base, used) {
+      var id = base || 'section';
+      var i = 2;
+      while (used.has(id) || document.getElementById(id)) {
+        id = (base || 'section') + '-' + i;
+        i += 1;
+      }
+      used.add(id);
+      return id;
+    }
+
+    function getScrollContainer(fromEl) {
+      if (!fromEl) return document.scrollingElement || document.documentElement;
+      var el = fromEl;
+      while (el && el !== document.body) {
+        if (el.classList && el.classList.contains('overflow-auto')) return el;
+        var st = window.getComputedStyle ? window.getComputedStyle(el) : null;
+        if (st && (st.overflowY === 'auto' || st.overflowY === 'scroll')) return el;
+        el = el.parentElement;
+      }
+      return document.scrollingElement || document.documentElement;
+    }
+
+    function isPageScrollContainer(container) {
+      return !container ||
+        container === window ||
+        container === document.body ||
+        container === document.documentElement ||
+        container === document.scrollingElement;
+    }
+
+    function getStickyOffset() {
+      var header = document.querySelector('.docs-page-header');
+      var headerHeight = header ? header.getBoundingClientRect().height : 0;
+      return Math.ceil(headerHeight) + 12;
+    }
+
+    function scrollToHeading(container, headingEl) {
+      if (!container || !headingEl) return;
+      var offset = getStickyOffset();
+      if (isPageScrollContainer(container)) {
+        var topPage = window.scrollY + headingEl.getBoundingClientRect().top - offset;
+        window.scrollTo({ top: topPage, behavior: 'smooth' });
+        return;
+      }
+      var cRect = container.getBoundingClientRect ? container.getBoundingClientRect() : { top: 0 };
+      var hRect = headingEl.getBoundingClientRect ? headingEl.getBoundingClientRect() : { top: 0 };
+      var current = container.scrollTop || 0;
+      var top = current + (hRect.top - cRect.top) - offset;
+      if (typeof container.scrollTo === 'function') container.scrollTo({ top: top, behavior: 'smooth' });
+      else container.scrollTop = top;
+    }
+
+    console.log('[Docs TOC] init start');
+    var content = document.getElementById('docs-content');
+    var toc = document.getElementById('docs-toc');
+    var tocMobile = document.getElementById('docs-toc-mobile');
+    var tocStatus = document.getElementById('docs-toc-status');
+    var tocMobileStatus = document.getElementById('docs-toc-mobile-status');
+    var mobileWrap = document.getElementById('docs-toc-mobile-wrap');
+    if (!content || (!toc && !tocMobile)) {
+      console.log('[Docs TOC] no content or nav containers', { hasContent: !!content, hasToc: !!toc, hasTocMobile: !!tocMobile });
+      return;
+    }
+    var scrollContainer = getScrollContainer(content);
+
+    function setTocState(state) {
+      var configs = [
+        { nav: toc, status: tocStatus },
+        { nav: tocMobile, status: tocMobileStatus }
+      ];
+      configs.forEach(function(cfg) {
+        if (!cfg.nav && !cfg.status) return;
+        console.log('[Docs TOC] setTocState', state, { hasNav: !!cfg.nav, hasStatus: !!cfg.status });
+        if (state === 'ready') {
+          if (cfg.status) cfg.status.classList.add('d-none');
+          if (cfg.nav) cfg.nav.classList.remove('d-none');
+          return;
+        }
+        if (cfg.nav) cfg.nav.classList.add('d-none');
+        if (cfg.status) {
+          cfg.status.classList.remove('d-none');
+          cfg.status.classList.toggle('docs-toc-status-empty', state === 'empty');
+          cfg.status.innerHTML = state === 'empty'
+            ? '{{ _("No headings found.") }}'
+            : '<span class="docs-toc-status-spinner spinner-border spinner-border-sm me-2" aria-hidden="true"></span>{{ _("Building outline...") }}';
+        }
+      });
+    }
+
+    var headings = Array.prototype.slice.call(content.querySelectorAll('h1, h2, h3, h4, h5, h6'));
+    console.log('[Docs TOC] raw headings count', headings.length);
+    headings = headings.filter(function(h) {
+      var t = (h.textContent || '').trim();
+      return t.length > 0;
+    });
+    console.log('[Docs TOC] filtered headings count', headings.length,
+      headings.map(function(h) { return { tag: h.tagName, id: h.id, text: (h.textContent || '').trim().slice(0, 60) }; }));
+    if (!headings.length) {
+      console.log('[Docs TOC] no headings, set empty state');
+      setTocState('empty');
+      return;
+    }
+
+    var used = new Set();
+    var items = [];
+    headings.forEach(function(h, idx) {
+      var level = parseInt(h.tagName.substring(1), 10) || 2;
+      var text = (h.textContent || '').trim();
+
+      var id = h.getAttribute('id');
+      if (!id) {
+        id = uniqueId(slugify(text), used);
+        h.setAttribute('id', id);
+      } else {
+        id = uniqueId(id, used);
+        h.setAttribute('id', id);
+      }
+
+      items.push({ id: id, level: level, text: text });
+      console.log('[Docs TOC] heading prepared', idx, { id: id, level: level, text: text.slice(0, 80) });
+    });
+
+    function buildNav(container) {
+      if (!container) return;
+      container.innerHTML = '';
+
+      var list = document.createElement('div');
+      list.className = 'docs-toc-list';
+      items.forEach(function(it) {
+        var a = document.createElement('a');
+        a.className = 'docs-toc-link docs-toc-l' + it.level;
+        a.href = '#' + it.id;
+        a.textContent = it.text;
+        a.dataset.targetId = it.id;
+        list.appendChild(a);
+      });
+      container.appendChild(list);
+      console.log('[Docs TOC] nav built', { containerId: container.id, items: items.length });
+
+      container.addEventListener('click', function(e) {
+        var a = e.target && e.target.closest ? e.target.closest('a.docs-toc-link') : null;
+        if (!a) return;
+        var id = a.dataset.targetId;
+        var target = document.getElementById(id);
+        if (!target) return;
+        e.preventDefault();
+        scrollToHeading(scrollContainer, target);
+        if (history && history.replaceState) history.replaceState(null, '', '#' + id);
+      });
+    }
+
+    try {
+      console.log('[Docs TOC] building nav...');
+      buildNav(toc);
+      buildNav(tocMobile);
+      setTocState('ready');
+      console.log('[Docs TOC] ready');
+    } catch (e) {
+      console.error('[Docs TOC] build failed', e);
+      setTocState('empty');
+    }
+    if (mobileWrap) mobileWrap.style.display = '';
+
+    var activeId = null;
+    function setActive(id) {
+      if (!id || id === activeId) return;
+      activeId = id;
+      [toc, tocMobile].forEach(function(container) {
+        if (!container) return;
+        var links = container.querySelectorAll('a.docs-toc-link');
+        for (var i = 0; i < links.length; i++) {
+          var a = links[i];
+          var isActive = a.dataset.targetId === id;
+          a.classList.toggle('active', isActive);
+        }
+      });
+    }
+
+    if ('IntersectionObserver' in window) {
+      var obs = new IntersectionObserver(function(entries) {
+        var visible = entries
+          .filter(function(en) { return en.isIntersecting; })
+          .sort(function(a, b) { return b.intersectionRatio - a.intersectionRatio; })[0];
+        if (visible && visible.target && visible.target.id) setActive(visible.target.id);
+      }, { root: isPageScrollContainer(scrollContainer) ? null : scrollContainer, rootMargin: '0px 0px -70% 0px', threshold: [0, 0.1, 0.25, 0.5, 0.75, 1] });
+
+      headings.forEach(function(h) { obs.observe(h); });
+    } else {
+      (isPageScrollContainer(scrollContainer) ? window : scrollContainer).addEventListener('scroll', function() {
+        var best = null;
+        var bestTop = -Infinity;
+        headings.forEach(function(h) {
+          var r = h.getBoundingClientRect();
+          if (r.top <= 120 && r.top > bestTop) { bestTop = r.top; best = h; }
+        });
+        if (best && best.id) setActive(best.id);
+      }, { passive: true });
+    }
+
+    var initial = (location.hash || '').replace(/^#/, '');
+    if (initial) setActive(initial);
+    else if (items[0] && items[0].id) setActive(items[0].id);
+  });
+</script>
+{% endif %}
+
 <script src="{{ config.ASSETS_ROOT }}/plugins/bootstrap/js/bootstrap.bundle.min.js"></script>
 <script>
 document.addEventListener('DOMContentLoaded', function() {
@@ -150,17 +398,33 @@ document.addEventListener('DOMContentLoaded', function() {
   var state = loadState();
   var selectedCategory = '{{ selected_category|e }}';
 
+  // Определяем одну открытую категорию
+  var openCatId = selectedCategory || null;
+  if (!openCatId) {
+    for (var key in state) {
+      if (state[key]) { openCatId = key; break; }
+    }
+  }
+
   accordionEl.querySelectorAll('.accordion-collapse').forEach(function(collapseEl) {
     var catId = collapseEl.id.replace('cat-', '');
-    var shouldShow = state[catId] === true || selectedCategory === catId;
+    var shouldShow = openCatId === catId;
     if (shouldShow) {
       collapseEl.classList.add('show');
       var btn = accordionEl.querySelector('[data-bs-target="#' + collapseEl.id + '"]');
       if (btn) { btn.classList.remove('collapsed'); btn.setAttribute('aria-expanded', 'true'); }
-      state[catId] = true;
+    } else {
+      collapseEl.classList.remove('show');
+      var btn2 = accordionEl.querySelector('[data-bs-target="#' + collapseEl.id + '"]');
+      if (btn2) { btn2.classList.add('collapsed'); btn2.setAttribute('aria-expanded', 'false'); }
     }
-    collapseEl.addEventListener('shown.bs.collapse', function() { state[catId] = true; saveState(state); });
-    collapseEl.addEventListener('hidden.bs.collapse', function() { state[catId] = false; saveState(state); });
+    collapseEl.addEventListener('shown.bs.collapse', function() {
+      var currentId = this.id.replace('cat-', '');
+      // храним только одну открытую категорию
+      state = {};
+      state[currentId] = true;
+      saveState(state);
+    });
   });
 
   function applyTreeFilter() {

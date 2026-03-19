@@ -1,26 +1,41 @@
-{% extends "layouts/base-fullscreen.html" %}
-{% from "docs/_doc_layout.html" import docs_doc_view, docs_doc_scripts, docs_doc_styles with context %}
-
-{% block title %}{{ filename }} - {{ _('Documentation') }}{% endblock %}
-
-{% block content %}
-<section class="pb-3">
-  <div class="container-fluid px-3 h-100">
-    <div class="row g-3 align-items-start" style="min-height: calc(100vh - 2rem);">
-      <div class="col-12">
-        <div class="card shadow-sm h-100">
-          <div class="card-body">
-            {{ docs_doc_view(content_html) }}
+{% macro docs_doc_view(content_html) %}
+  <div class="row g-4 align-items-start">
+    <div class="col-12 col-lg-9">
+      <div class="d-lg-none mb-3" id="docs-toc-mobile-wrap" style="display:none;">
+        <details class="docs-toc-mobile card border-0 bg-body-tertiary">
+          <summary class="card-body py-2" style="cursor:pointer;">
+            <span class="fw-semibold">{{ _("Outline") }}</span>
+            <span class="text-muted small ms-2">{{ _("Quick navigation") }}</span>
+          </summary>
+          <div class="card-body pt-0">
+            <div id="docs-toc-mobile-status" class="docs-toc-status small text-muted">
+              <span class="docs-toc-status-spinner spinner-border spinner-border-sm me-2" aria-hidden="true"></span>{{ _("Building outline...") }}
+            </div>
+            <nav id="docs-toc-mobile" class="docs-toc d-none"></nav>
           </div>
+        </details>
+      </div>
+
+      <div class="markdown-body" id="docs-content">
+        {{ content_html|safe }}
+      </div>
+    </div>
+
+    <div class="col-12 col-lg-3 d-none d-lg-block docs-toc-column">
+      <div class="docs-toc-card card border-0 bg-body-tertiary">
+        <div class="card-body py-3">
+          <div class="fw-semibold mb-2">{{ _("Outline") }}</div>
+          <div id="docs-toc-status" class="docs-toc-status small text-muted">
+            <span class="docs-toc-status-spinner spinner-border spinner-border-sm me-2" aria-hidden="true"></span>{{ _("Building outline...") }}
+          </div>
+          <nav id="docs-toc" class="docs-toc d-none"></nav>
         </div>
       </div>
     </div>
   </div>
-</section>
-{% endblock %}
+{% endmacro %}
 
-{% block javascripts %}
-{{ super() }}
+{% macro docs_doc_scripts() %}
 <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
 <script>
   (function(init) {
@@ -39,9 +54,6 @@
     }
   });
 </script>
-
-<script src="{{ config.ASSETS_ROOT }}/plugins/prism/prism.min.js"></script>
-<script src="{{ config.ASSETS_ROOT }}/plugins/prism/prism-python.min.js"></script>
 
 <script>
   (function(init) {
@@ -116,7 +128,7 @@
       else container.scrollTop = top;
     }
 
-    console.log('[Docs TOC] init start (view)');
+    console.log('[Docs TOC] init start');
     var content = document.getElementById('docs-content');
     var toc = document.getElementById('docs-toc');
     var tocMobile = document.getElementById('docs-toc-mobile');
@@ -124,7 +136,7 @@
     var tocMobileStatus = document.getElementById('docs-toc-mobile-status');
     var mobileWrap = document.getElementById('docs-toc-mobile-wrap');
     if (!content || (!toc && !tocMobile)) {
-      console.log('[Docs TOC] no content or nav containers (view)', { hasContent: !!content, hasToc: !!toc, hasTocMobile: !!tocMobile });
+      console.log('[Docs TOC] no content or nav containers', { hasContent: !!content, hasToc: !!toc, hasTocMobile: !!tocMobile });
       return;
     }
     var scrollContainer = getScrollContainer(content);
@@ -136,7 +148,7 @@
       ];
       configs.forEach(function(cfg) {
         if (!cfg.nav && !cfg.status) return;
-        console.log('[Docs TOC] setTocState (view)', state, { hasNav: !!cfg.nav, hasStatus: !!cfg.status });
+        console.log('[Docs TOC] setTocState', state, { hasNav: !!cfg.nav, hasStatus: !!cfg.status });
         if (state === 'ready') {
           if (cfg.status) cfg.status.classList.add('d-none');
           if (cfg.nav) cfg.nav.classList.remove('d-none');
@@ -148,21 +160,21 @@
           cfg.status.classList.toggle('docs-toc-status-empty', state === 'empty');
           cfg.status.innerHTML = state === 'empty'
             ? '{{ _("No headings found.") }}'
-            : '<span class="docs-toc-status-spinner spinner-border spinner-border-sm me-2" aria-hidden="true"></span>{{ _("Building outline...") }}';
+            : '<span class="docs-toc-status-spinner spinner-border spinner-border-sm me-2" aria-hidden="true"></span>Building outline...';
         }
       });
     }
 
     var headings = Array.prototype.slice.call(content.querySelectorAll('h1, h2, h3, h4, h5, h6'));
-    console.log('[Docs TOC] raw headings count (view)', headings.length);
+    console.log('[Docs TOC] raw headings count', headings.length);
     headings = headings.filter(function(h) {
       var t = (h.textContent || '').trim();
       return t.length > 0;
     });
-    console.log('[Docs TOC] filtered headings count (view)', headings.length,
+    console.log('[Docs TOC] filtered headings count', headings.length,
       headings.map(function(h) { return { tag: h.tagName, id: h.id, text: (h.textContent || '').trim().slice(0, 60) }; }));
     if (!headings.length) {
-      console.log('[Docs TOC] no headings, set empty state (view)');
+      console.log('[Docs TOC] no headings, set empty state');
       setTocState('empty');
       return;
     }
@@ -183,7 +195,7 @@
       }
 
       items.push({ id: id, level: level, text: text });
-      console.log('[Docs TOC] heading prepared (view)', idx, { id: id, level: level, text: text.slice(0, 80) });
+      console.log('[Docs TOC] heading prepared', idx, { id: id, level: level, text: text.slice(0, 80) });
     });
 
     function buildNav(container) {
@@ -201,7 +213,7 @@
         list.appendChild(a);
       });
       container.appendChild(list);
-      console.log('[Docs TOC] nav built (view)', { containerId: container.id, items: items.length });
+      console.log('[Docs TOC] nav built', { containerId: container.id, items: items.length });
 
       container.addEventListener('click', function(e) {
         var a = e.target && e.target.closest ? e.target.closest('a.docs-toc-link') : null;
@@ -216,13 +228,13 @@
     }
 
     try {
-      console.log('[Docs TOC] building nav (view)...');
+      console.log('[Docs TOC] building nav...');
       buildNav(toc);
       buildNav(tocMobile);
       setTocState('ready');
-      console.log('[Docs TOC] ready (view)');
+      console.log('[Docs TOC] ready');
     } catch (e) {
-      console.error('[Docs TOC] build failed (view)', e);
+      console.error('[Docs TOC] build failed', e);
       setTocState('empty');
     }
     if (mobileWrap) mobileWrap.style.display = '';
@@ -252,7 +264,6 @@
 
       headings.forEach(function(h) { obs.observe(h); });
     } else {
-      // Fallback: minimal active update on scroll
       (isPageScrollContainer(scrollContainer) ? window : scrollContainer).addEventListener('scroll', function() {
         var best = null;
         var bestTop = -Infinity;
@@ -269,13 +280,155 @@
     else if (items[0] && items[0].id) setActive(items[0].id);
   });
 </script>
-{% endblock %}
+{% endmacro %}
 
-{% block stylesheets %}
-{{ super() }}
-<link rel="stylesheet" href="{{ config.ASSETS_ROOT }}/plugins/prism/prism.min.css">
-<style>
-  {{ docs_doc_styles() }}
-</style>
-{% endblock %}
+{% macro docs_doc_styles() %}
+  .markdown-body h1,
+  .markdown-body h2,
+  .markdown-body h3,
+  .markdown-body h4 {
+    margin-top: 1.5rem;
+    margin-bottom: 0.75rem;
+    scroll-margin-top: 6.5rem;
+  }
+  .markdown-body p {
+    margin-bottom: 0.5rem;
+  }
+  .markdown-body pre {
+    font-family: var(--bs-font-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace);
+    font-size: 0.9rem;
+    padding: 0.75rem;
+    border-radius: 0.5rem;
+    overflow-x: auto;
+    background: #f6f8fa;
+    border: 1px solid rgba(27, 31, 35, 0.15);
+  }
+  [data-bs-theme="dark"] .markdown-body pre,
+  .dark-mode .markdown-body pre {
+    background: #0d1117;
+    border-color: rgba(240, 246, 252, 0.12);
+  }
+  .markdown-body pre code {
+    display: block;
+    padding: 0;
+    background: transparent;
+  }
+  .markdown-body code {
+    background: rgba(15, 15, 15, 0.05);
+    padding: 0.1rem 0.25rem;
+    border-radius: 0.25rem;
+  }
+  
+  /* Prism.js dark theme: убрать светящийся text-shadow вокруг символов */
+  [data-bs-theme="dark"] #docs-content code[class*="language-"],
+  .dark-mode #docs-content code[class*="language-"],
+  [data-bs-theme="dark"] #docs-content pre[class*="language-"],
+  .dark-mode #docs-content pre[class*="language-"] {
+    text-shadow: none !important;
+    color: #e6edf3; /* светлый текст для контраста */
+  }
+  [data-bs-theme="dark"] #docs-content .token,
+  .dark-mode #docs-content .token {
+    text-shadow: none !important;
+  }
+
+  /* Сделать операторы (в т.ч. '=') более нейтральными в тёмной теме */
+  [data-bs-theme="dark"] #docs-content .token.operator,
+  .dark-mode #docs-content .token.operator {
+    color: inherit !important;
+    background: inherit !important;
+  }
+  .markdown-body table {
+    width: 100%;
+    margin-bottom: 1rem;
+  }
+  .markdown-body table th,
+  .markdown-body table td {
+    padding: 0.5rem;
+    border: 1px solid rgba(0, 0, 0, 0.1);
+  }
+  .markdown-body .mermaid {
+    margin: 1.5rem 0;
+    text-align: center;
+    background: #f8f9fa;
+    padding: 1rem;
+    border-radius: 0.5rem;
+    overflow-x: auto;
+  }
+  [data-bs-theme="dark"] .markdown-body .mermaid,
+  .dark-mode .markdown-body .mermaid {
+    background: #1e1e1e;
+  }
+
+  .docs-toc-column {
+    position: sticky;
+    top: 5.5rem;
+    align-self: flex-start;
+  }
+
+  .docs-toc-card {
+    max-height: calc(100vh - 2rem);
+    overflow: auto;
+    border-radius: 0.75rem;
+  }
+
+  .docs-toc {
+    font-size: 0.9rem;
+    line-height: 1.25rem;
+  }
+
+  .docs-toc-status {
+    display: flex;
+    align-items: center;
+    min-height: 2rem;
+  }
+
+  .docs-toc-status-empty {
+    min-height: 0;
+  }
+
+  .docs-toc-status-spinner {
+    width: 0.9rem;
+    height: 0.9rem;
+    flex: 0 0 auto;
+  }
+
+  .docs-toc-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+  }
+
+  .docs-toc-link {
+    display: block;
+    text-decoration: none;
+    color: inherit;
+    padding: 0.25rem 0.5rem;
+    border-radius: 0.375rem;
+    border-left: 2px solid transparent;
+    opacity: 0.85;
+  }
+
+  .docs-toc-link:hover {
+    background: rgba(0,0,0,0.04);
+    opacity: 1;
+  }
+
+  [data-bs-theme="dark"] .docs-toc-link:hover,
+  .dark-mode .docs-toc-link:hover {
+    background: rgba(255,255,255,0.06);
+  }
+
+  .docs-toc-link.active {
+    font-weight: 600;
+    border-left-color: #0d6efd;
+    background: rgba(13,110,253,0.08);
+    opacity: 1;
+  }
+
+  .docs-toc-l1 { padding-left: 0.5rem; }
+  .docs-toc-l2 { padding-left: 0.75rem; }
+  .docs-toc-l3 { padding-left: 1.25rem; }
+  .docs-toc-l4 { padding-left: 1.75rem; }
+{% endmacro %}
 

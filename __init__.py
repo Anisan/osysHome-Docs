@@ -166,8 +166,8 @@ class Docs(BasePlugin):
         @self.blueprint.route("/docs/<source_id>/<path:doc_path>")
         @handle_user_required
         def docs_view_by_source(source_id, doc_path):
-            # Redirect to docs_home for unified layout with sidebar
-            return redirect(url_for("Docs.docs_home", category=source_id, file=doc_path))
+            # Render clean document view without sidebar
+            return self._render_markdown_doc_by_source(source_id, doc_path)
 
         @self.blueprint.route("/docs/search")
         @handle_user_required
