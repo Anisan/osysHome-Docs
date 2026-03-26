@@ -33,6 +33,36 @@
     </div>
 
     <div class="docs-main">
+      {% if index_ready is defined and not index_ready %}
+      <div
+        class="alert alert-info docs-index-progress mb-3"
+        id="docs-index-progress"
+        role="status"
+        data-status-url="{{ url_for('Docs.docs_index_status') }}"
+        data-initial-progress='{{ (index_progress or {"status": "idle"})|tojson }}'
+      >
+        <div class="d-flex align-items-start gap-3">
+          <span class="spinner-border spinner-border-sm mt-1 flex-shrink-0" aria-hidden="true"></span>
+          <div class="flex-grow-1">
+            <div class="fw-semibold mb-1">{{ _('Documentation index is being prepared') }}</div>
+            <div class="small mb-2" data-role="progress-message">
+              {{ (index_progress and index_progress.message) or _('Please wait while the documentation is being indexed.') }}
+            </div>
+            <div class="progress docs-index-progress-bar-wrap" aria-label="{{ _('Indexing progress') }}">
+              <div
+                class="progress-bar progress-bar-striped progress-bar-animated"
+                data-role="progress-bar"
+                style="width: 100%;"
+                aria-valuemin="0"
+                aria-valuemax="100"
+                aria-valuenow="0"
+              ></div>
+            </div>
+            <div class="small text-muted mt-2" data-role="progress-meta"></div>
+          </div>
+        </div>
+      </div>
+      {% endif %}
       {% block docs_main %}{% endblock %}
     </div>
   </div>
@@ -63,6 +93,14 @@
     margin-top: 4.5rem;
   }
 
+  .docs-index-progress {
+    border-radius: 0.75rem;
+  }
+
+  .docs-index-progress-bar-wrap {
+    height: 0.7rem;
+  }
+
   @media (max-width: 767.98px) {
     .docs-page-header {
       padding: 0.5rem 0;
@@ -73,6 +111,95 @@
 
 {% block javascripts %}
 {{ super() }}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  var container = document.getElementById('docs-index-progress');
+  if (!container) return;
+
+  var statusUrl = container.getAttribute('data-status-url');
+  var messageEl = container.querySelector('[data-role="progress-message"]');
+  var metaEl = container.querySelector('[data-role="progress-meta"]');
+  var barEl = container.querySelector('[data-role="progress-bar"]');
+  var reloadScheduled = false;
+  var pollTimer = null;
+
+  function parseInitialProgress() {
+    try {
+      return JSON.parse(container.getAttribute('data-initial-progress') || '{}');
+    } catch (e) {
+      return {};
+    }
+  }
+
+  function renderProgress(progress) {
+    progress = progress || {};
+    var status = progress.status || 'idle';
+    var processed = typeof progress.processed === 'number' ? progress.processed : null;
+    var total = typeof progress.total === 'number' ? progress.total : null;
+    var message = progress.message || '{{ _("Please wait while the documentation is being indexed.") }}';
+    var updatedAt = progress.updated_at || '';
+    var percent = total && total > 0 && processed !== null ? Math.max(0, Math.min(100, Math.round((processed / total) * 100))) : null;
+
+    if (messageEl) {
+      messageEl.textContent = message;
+    }
+
+    if (metaEl) {
+      if (processed !== null && total !== null) {
+        metaEl.textContent = processed + ' / ' + total + ' (' + percent + '%)' + (updatedAt ? ' - ' + updatedAt : '');
+      } else if (processed !== null) {
+        metaEl.textContent = processed + (updatedAt ? ' - ' + updatedAt : '');
+      } else {
+        metaEl.textContent = updatedAt || '';
+      }
+    }
+
+    if (barEl) {
+      if (percent !== null) {
+        barEl.style.width = percent + '%';
+        barEl.setAttribute('aria-valuenow', String(percent));
+      } else {
+        barEl.style.width = '100%';
+        barEl.setAttribute('aria-valuenow', '100');
+      }
+      barEl.classList.toggle('progress-bar-animated', percent === null || status === 'running');
+      barEl.classList.toggle('bg-danger', status === 'error');
+      barEl.classList.toggle('bg-success', status === 'done');
+    }
+
+    if (status === 'done' && !reloadScheduled) {
+      reloadScheduled = true;
+      if (pollTimer) {
+        window.clearTimeout(pollTimer);
+      }
+      window.setTimeout(function() {
+        window.location.reload();
+      }, 500);
+    }
+  }
+
+  function poll() {
+    fetch(statusUrl, { headers: { 'X-Requested-With': 'XMLHttpRequest' } })
+      .then(function(response) { return response.ok ? response.json() : Promise.reject(new Error('status')); })
+      .then(function(payload) {
+        renderProgress(payload && payload.index_progress ? payload.index_progress : {});
+        if (!reloadScheduled) {
+          pollTimer = window.setTimeout(poll, 1500);
+        }
+      })
+      .catch(function() {
+        if (!reloadScheduled) {
+          pollTimer = window.setTimeout(poll, 2500);
+        }
+      });
+  }
+
+  renderProgress(parseInitialProgress());
+  if (!reloadScheduled) {
+    pollTimer = window.setTimeout(poll, 1500);
+  }
+});
+</script>
 {% block docs_page_javascripts %}{% endblock %}
 {% endblock %}
 

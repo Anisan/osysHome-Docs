@@ -1,4 +1,5 @@
-markdown
+cmarkgfm>=0.8.0
+markdown2>=2.4.0
 pdoc
 whoosh>=2.7.0
 

@@ -49,8 +49,68 @@
       var isDark = document.documentElement.getAttribute('data-bs-theme') === 'dark' ||
                    document.body.classList.contains('dark-mode') ||
                    (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches);
-      mermaid.initialize({ startOnLoad: false, theme: isDark ? 'dark' : 'default' });
+      if (isDark) {
+        mermaid.initialize({
+          startOnLoad: false,
+          theme: 'base',
+          themeVariables: {
+            darkMode: true,
+            background: '#1e1e1e',
+            primaryColor: '#2d2d2d',
+            primaryTextColor: '#e6edf3',
+            primaryBorderColor: '#484f58',
+            secondaryColor: '#21262d',
+            secondaryTextColor: '#8b949e',
+            tertiaryColor: '#161b22',
+            lineColor: '#c9d1d9',
+            textColor: '#e6edf3',
+            mainBkg: '#2d2d2d',
+            nodeBorder: '#484f58',
+            clusterBkg: '#21262d',
+            titleColor: '#e6edf3',
+            edgeLabelBackground: '#21262d',
+            nodeTextColor: '#e6edf3',
+            actorBkg: '#2d2d2d',
+            actorBorder: '#484f58',
+            actorTextColor: '#e6edf3',
+            signalColor: '#c9d1d9',
+            signalTextColor: '#e6edf3',
+            labelBoxBkgColor: '#2d2d2d',
+            labelTextColor: '#e6edf3',
+            activationBkgColor: '#21262d',
+            activationBorderColor: '#484f58',
+            sectionBkgColor: '#21262d',
+            sectionBkgColor2: '#2d2d2d',
+            taskBorderColor: '#484f58',
+            taskBkgColor: '#2d2d2d',
+            taskTextColor: '#e6edf3',
+            taskTextLightColor: '#8b949e',
+            taskTextOutsideColor: '#e6edf3',
+            activeTaskBorderColor: '#58a6ff',
+            activeTaskBkgColor: '#1f6feb',
+            gridColor: '#484f58',
+            altSectionBkgColor: '#161b22'
+          }
+        });
+      } else {
+        mermaid.initialize({ startOnLoad: false, theme: 'default' });
+      }
       mermaid.run();
+    }
+  });
+</script>
+<script src="{{ config.ASSETS_ROOT }}/plugins/prism/prism.min.js"></script>
+<script src="{{ config.ASSETS_ROOT }}/plugins/prism/prism-python.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/components/prism-javascript.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/components/prism-json.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/components/prism-bash.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/components/prism-sql.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/components/prism-yaml.min.js"></script>
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    if (typeof Prism !== 'undefined') {
+      var el = document.getElementById('docs-content');
+      if (el) Prism.highlightAllUnder(el);
     }
   });
 </script>
@@ -128,7 +188,6 @@
       else container.scrollTop = top;
     }
 
-    console.log('[Docs TOC] init start');
     var content = document.getElementById('docs-content');
     var toc = document.getElementById('docs-toc');
     var tocMobile = document.getElementById('docs-toc-mobile');
@@ -136,7 +195,6 @@
     var tocMobileStatus = document.getElementById('docs-toc-mobile-status');
     var mobileWrap = document.getElementById('docs-toc-mobile-wrap');
     if (!content || (!toc && !tocMobile)) {
-      console.log('[Docs TOC] no content or nav containers', { hasContent: !!content, hasToc: !!toc, hasTocMobile: !!tocMobile });
       return;
     }
     var scrollContainer = getScrollContainer(content);
@@ -148,7 +206,6 @@
       ];
       configs.forEach(function(cfg) {
         if (!cfg.nav && !cfg.status) return;
-        console.log('[Docs TOC] setTocState', state, { hasNav: !!cfg.nav, hasStatus: !!cfg.status });
         if (state === 'ready') {
           if (cfg.status) cfg.status.classList.add('d-none');
           if (cfg.nav) cfg.nav.classList.remove('d-none');
@@ -160,31 +217,26 @@
           cfg.status.classList.toggle('docs-toc-status-empty', state === 'empty');
           cfg.status.innerHTML = state === 'empty'
             ? '{{ _("No headings found.") }}'
-            : '<span class="docs-toc-status-spinner spinner-border spinner-border-sm me-2" aria-hidden="true"></span>Building outline...';
+            : '<span class="docs-toc-status-spinner spinner-border spinner-border-sm me-2" aria-hidden="true"></span>{{ _("Building outline...") }}';
         }
       });
     }
 
     var headings = Array.prototype.slice.call(content.querySelectorAll('h1, h2, h3, h4, h5, h6'));
-    console.log('[Docs TOC] raw headings count', headings.length);
     headings = headings.filter(function(h) {
       var t = (h.textContent || '').trim();
       return t.length > 0;
     });
-    console.log('[Docs TOC] filtered headings count', headings.length,
-      headings.map(function(h) { return { tag: h.tagName, id: h.id, text: (h.textContent || '').trim().slice(0, 60) }; }));
     if (!headings.length) {
-      console.log('[Docs TOC] no headings, set empty state');
       setTocState('empty');
       return;
     }
 
     var used = new Set();
     var items = [];
-    headings.forEach(function(h, idx) {
+    headings.forEach(function(h) {
       var level = parseInt(h.tagName.substring(1), 10) || 2;
       var text = (h.textContent || '').trim();
-
       var id = h.getAttribute('id');
       if (!id) {
         id = uniqueId(slugify(text), used);
@@ -193,9 +245,7 @@
         id = uniqueId(id, used);
         h.setAttribute('id', id);
       }
-
       items.push({ id: id, level: level, text: text });
-      console.log('[Docs TOC] heading prepared', idx, { id: id, level: level, text: text.slice(0, 80) });
     });
 
     function buildNav(container) {
@@ -213,7 +263,6 @@
         list.appendChild(a);
       });
       container.appendChild(list);
-      console.log('[Docs TOC] nav built', { containerId: container.id, items: items.length });
 
       container.addEventListener('click', function(e) {
         var a = e.target && e.target.closest ? e.target.closest('a.docs-toc-link') : null;
@@ -228,13 +277,10 @@
     }
 
     try {
-      console.log('[Docs TOC] building nav...');
       buildNav(toc);
       buildNav(tocMobile);
       setTocState('ready');
-      console.log('[Docs TOC] ready');
     } catch (e) {
-      console.error('[Docs TOC] build failed', e);
       setTocState('empty');
     }
     if (mobileWrap) mobileWrap.style.display = '';
@@ -282,6 +328,60 @@
 </script>
 {% endmacro %}
 
+{% macro docs_doc_code_copy_init() %}
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    var content = document.getElementById('docs-content');
+    if (!content) return;
+    var pres = content.querySelectorAll('pre > code');
+    pres.forEach(function(codeEl) {
+      var pre = codeEl.parentElement;
+      if (!pre || pre.classList.contains('docs-code-block')) return;
+      var wrapper = document.createElement('div');
+      wrapper.className = 'docs-code-block';
+      pre.parentNode.insertBefore(wrapper, pre);
+      wrapper.appendChild(pre);
+      var btn = document.createElement('button');
+      btn.className = 'docs-code-copy-btn';
+      btn.type = 'button';
+      btn.setAttribute('title', '{{ _("Copy to clipboard") }}');
+      btn.textContent = '{{ _("Copy") }}';
+      wrapper.insertBefore(btn, pre);
+      btn.addEventListener('click', function() {
+        var text = codeEl.textContent || '';
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+          navigator.clipboard.writeText(text).then(function() {
+            btn.classList.add('copied');
+            btn.textContent = '{{ _("Copied!") }}';
+            setTimeout(function() {
+              btn.classList.remove('copied');
+              btn.textContent = '{{ _("Copy") }}';
+            }, 1500);
+          });
+        } else {
+          var ta = document.createElement('textarea');
+          ta.value = text;
+          ta.style.position = 'fixed';
+          ta.style.left = '-9999px';
+          document.body.appendChild(ta);
+          ta.select();
+          try {
+            document.execCommand('copy');
+            btn.classList.add('copied');
+            btn.textContent = '{{ _("Copied!") }}';
+            setTimeout(function() {
+              btn.classList.remove('copied');
+              btn.textContent = '{{ _("Copy") }}';
+            }, 1500);
+          } catch (e) {}
+          document.body.removeChild(ta);
+        }
+      });
+    });
+  });
+</script>
+{% endmacro %}
+
 {% macro docs_doc_styles() %}
   .markdown-body h1,
   .markdown-body h2,
@@ -294,7 +394,109 @@
   .markdown-body p {
     margin-bottom: 0.5rem;
   }
-  .markdown-body pre {
+  .markdown-body blockquote {
+    margin: 0.75rem 0;
+    padding: 0.5rem 0 0.5rem 1rem;
+    border-left: 4px solid rgba(27, 31, 35, 0.2);
+    color: #57606a;
+  }
+  .markdown-body blockquote p {
+    margin-bottom: 0.25rem;
+  }
+  .markdown-body blockquote blockquote {
+    margin-left: 0.5rem;
+    padding-left: 1rem;
+    border-left-color: rgba(27, 31, 35, 0.15);
+  }
+  /* GitHub-style alerts */
+  .markdown-body .docs-alert {
+    margin: 0.75rem 0;
+    padding: 0;
+    border-left: 4px solid;
+    border-radius: 0 0.375rem 0.375rem 0;
+    overflow: hidden;
+  }
+  .markdown-body .docs-alert-title {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem 1rem 0.25rem;
+    font-weight: 700;
+    font-size: 0.9rem;
+  }
+  .markdown-body .docs-alert-icon {
+    display: inline-flex;
+    flex-shrink: 0;
+    align-items: center;
+  }
+  .markdown-body .docs-alert-icon i {
+    font-size: 1rem;
+  }
+  .markdown-body .docs-alert-note .docs-alert-title { color: #0969da; }
+  .markdown-body .docs-alert-tip .docs-alert-title { color: #1a7f37; }
+  .markdown-body .docs-alert-important .docs-alert-title { color: #8250df; }
+  .markdown-body .docs-alert-warning .docs-alert-title { color: #9a6700; }
+  .markdown-body .docs-alert-caution .docs-alert-title { color: #cf222e; }
+  [data-bs-theme="dark"] .markdown-body .docs-alert-note .docs-alert-title,
+  .dark-mode .markdown-body .docs-alert-note .docs-alert-title { color: #58a6ff; }
+  [data-bs-theme="dark"] .markdown-body .docs-alert-tip .docs-alert-title,
+  .dark-mode .markdown-body .docs-alert-tip .docs-alert-title { color: #3fb950; }
+  [data-bs-theme="dark"] .markdown-body .docs-alert-important .docs-alert-title,
+  .dark-mode .markdown-body .docs-alert-important .docs-alert-title { color: #a371f7; }
+  [data-bs-theme="dark"] .markdown-body .docs-alert-warning .docs-alert-title,
+  .dark-mode .markdown-body .docs-alert-warning .docs-alert-title { color: #d29922; }
+  [data-bs-theme="dark"] .markdown-body .docs-alert-caution .docs-alert-title,
+  .dark-mode .markdown-body .docs-alert-caution .docs-alert-title { color: #f85149; }
+  .markdown-body .docs-alert-body {
+    padding: 0 1rem 0.75rem 1rem;
+  }
+  .markdown-body .docs-alert-body p:last-child {
+    margin-bottom: 0;
+  }
+  .markdown-body .docs-alert-note {
+    border-left-color: #0969da;
+    background: #ddf4ff;
+  }
+  .markdown-body .docs-alert-tip {
+    border-left-color: #1a7f37;
+    background: #dafbe1;
+  }
+  .markdown-body .docs-alert-important {
+    border-left-color: #8250df;
+    background: #fbefff;
+  }
+  .markdown-body .docs-alert-warning {
+    border-left-color: #9a6700;
+    background: #fff8c5;
+  }
+  .markdown-body .docs-alert-caution {
+    border-left-color: #cf222e;
+    background: #ffebe9;
+  }
+  [data-bs-theme="dark"] .markdown-body .docs-alert-note,
+  .dark-mode .markdown-body .docs-alert-note { border-left-color: #58a6ff; background: rgba(56, 139, 253, 0.15); }
+  [data-bs-theme="dark"] .markdown-body .docs-alert-tip,
+  .dark-mode .markdown-body .docs-alert-tip { border-left-color: #3fb950; background: rgba(46, 160, 67, 0.15); }
+  [data-bs-theme="dark"] .markdown-body .docs-alert-important,
+  .dark-mode .markdown-body .docs-alert-important { border-left-color: #a371f7; background: rgba(163, 113, 247, 0.15); }
+  [data-bs-theme="dark"] .markdown-body .docs-alert-warning,
+  .dark-mode .markdown-body .docs-alert-warning { border-left-color: #d29922; background: rgba(210, 153, 34, 0.15); }
+  [data-bs-theme="dark"] .markdown-body .docs-alert-caution,
+  .dark-mode .markdown-body .docs-alert-caution { border-left-color: #f85149; background: rgba(248, 81, 73, 0.15); }
+  [data-bs-theme="dark"] .markdown-body blockquote,
+  .dark-mode .markdown-body blockquote {
+    border-left-color: rgba(240, 246, 252, 0.2);
+    color: #8b949e;
+  }
+  [data-bs-theme="dark"] .markdown-body blockquote blockquote,
+  .dark-mode .markdown-body blockquote blockquote {
+    border-left-color: rgba(240, 246, 252, 0.15);
+  }
+  .markdown-body .docs-code-block {
+    position: relative;
+    margin-bottom: 1rem;
+  }
+  .markdown-body .docs-code-block pre {
     font-family: var(--bs-font-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace);
     font-size: 0.9rem;
     padding: 0.75rem;
@@ -302,6 +504,40 @@
     overflow-x: auto;
     background: #f6f8fa;
     border: 1px solid rgba(27, 31, 35, 0.15);
+  }
+  .markdown-body .docs-code-copy-btn {
+    position: absolute;
+    top: 0.5rem;
+    right: 0.5rem;
+    z-index: 2;
+    padding: 0.25rem 0.5rem;
+    font-size: 0.75rem;
+    border: 1px solid rgba(27, 31, 35, 0.2);
+    border-radius: 0.375rem;
+    background: rgba(255, 255, 255, 0.9);
+    color: #24292f;
+    cursor: pointer;
+    opacity: 0.8;
+    transition: opacity 0.15s;
+  }
+  .markdown-body .docs-code-copy-btn:hover {
+    opacity: 1;
+  }
+  .markdown-body .docs-code-copy-btn.copied {
+    background: #2da44e;
+    border-color: #2da44e;
+    color: #fff;
+  }
+  [data-bs-theme="dark"] .markdown-body .docs-code-copy-btn,
+  .dark-mode .markdown-body .docs-code-copy-btn {
+    background: rgba(22, 27, 34, 0.9);
+    border-color: rgba(240, 246, 252, 0.2);
+    color: #e6edf3;
+  }
+  [data-bs-theme="dark"] .markdown-body .docs-code-copy-btn.copied,
+  .dark-mode .markdown-body .docs-code-copy-btn.copied {
+    background: #238636;
+    border-color: #238636;
   }
   [data-bs-theme="dark"] .markdown-body pre,
   .dark-mode .markdown-body pre {
@@ -317,6 +553,37 @@
     background: rgba(15, 15, 15, 0.05);
     padding: 0.1rem 0.25rem;
     border-radius: 0.25rem;
+  }
+  .markdown-body sub,
+  .markdown-body sup {
+    font-size: 0.75em;
+    line-height: 0;
+  }
+  .markdown-body sup { vertical-align: super; }
+  .markdown-body sub { vertical-align: sub; }
+  .markdown-body ins {
+    text-decoration: underline;
+  }
+
+  /* Color swatches for HEX/RGB/HSL in inline code */
+  .markdown-body .docs-color-inline {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    vertical-align: middle;
+  }
+  .markdown-body .docs-color-swatch {
+    display: inline-block;
+    width: 1em;
+    height: 1em;
+    min-width: 1em;
+    border-radius: 0.2em;
+    border: 1px solid rgba(0, 0, 0, 0.15);
+    flex-shrink: 0;
+  }
+  [data-bs-theme="dark"] .markdown-body .docs-color-swatch,
+  .dark-mode .markdown-body .docs-color-swatch {
+    border-color: rgba(255, 255, 255, 0.25);
   }
   
   /* Prism.js dark theme: убрать светящийся text-shadow вокруг символов */
@@ -347,6 +614,12 @@
     padding: 0.5rem;
     border: 1px solid rgba(0, 0, 0, 0.1);
   }
+  [data-bs-theme="dark"] .markdown-body table th,
+  [data-bs-theme="dark"] .markdown-body table td,
+  .dark-mode .markdown-body table th,
+  .dark-mode .markdown-body table td {
+    border-color: rgba(255, 255, 255, 0.2);
+  }
   .markdown-body .mermaid {
     margin: 1.5rem 0;
     text-align: center;
@@ -358,6 +631,57 @@
   [data-bs-theme="dark"] .markdown-body .mermaid,
   .dark-mode .markdown-body .mermaid {
     background: #1e1e1e;
+  }
+  /* Mermaid: светлый текст для подписей на стрелках и фоне; тёмный — для текста внутри блоков */
+  [data-bs-theme="dark"] .markdown-body .mermaid svg text,
+  [data-bs-theme="dark"] .markdown-body .mermaid svg tspan,
+  .dark-mode .markdown-body .mermaid svg text,
+  .dark-mode .markdown-body .mermaid svg tspan {
+    fill: #e6edf3 !important;
+  }
+  /* Исключение: тёмный текст внутри блоков акторов и сущностей (светлый фон) */
+  [data-bs-theme="dark"] .markdown-body .mermaid svg .actor text,
+  [data-bs-theme="dark"] .markdown-body .mermaid svg .actor tspan,
+  [data-bs-theme="dark"] .markdown-body .mermaid svg .actor-man text,
+  [data-bs-theme="dark"] .markdown-body .mermaid svg .actor-man tspan,
+  [data-bs-theme="dark"] .markdown-body .mermaid svg .actor-box text,
+  [data-bs-theme="dark"] .markdown-body .mermaid svg .actor-box tspan,
+  [data-bs-theme="dark"] .markdown-body .mermaid svg .participant text,
+  [data-bs-theme="dark"] .markdown-body .mermaid svg .participant tspan,
+  [data-bs-theme="dark"] .markdown-body .mermaid svg .actor-cell text,
+  [data-bs-theme="dark"] .markdown-body .mermaid svg .actor-cell tspan,
+  [data-bs-theme="dark"] .markdown-body .mermaid svg [id^="entity-"] text,
+  [data-bs-theme="dark"] .markdown-body .mermaid svg [id^="entity-"] tspan,
+  .dark-mode .markdown-body .mermaid svg .actor text,
+  .dark-mode .markdown-body .mermaid svg .actor tspan,
+  .dark-mode .markdown-body .mermaid svg .actor-man text,
+  .dark-mode .markdown-body .mermaid svg .actor-man tspan,
+  .dark-mode .markdown-body .mermaid svg .actor-box text,
+  .dark-mode .markdown-body .mermaid svg .actor-box tspan,
+  .dark-mode .markdown-body .mermaid svg .participant text,
+  .dark-mode .markdown-body .mermaid svg .participant tspan,
+  .dark-mode .markdown-body .mermaid svg .actor-cell text,
+  .dark-mode .markdown-body .mermaid svg .actor-cell tspan,
+  .dark-mode .markdown-body .mermaid svg [id^="entity-"] text,
+  .dark-mode .markdown-body .mermaid svg [id^="entity-"] tspan {
+    fill: #1f2328 !important;
+  }
+  [data-bs-theme="dark"] .markdown-body .mermaid svg path,
+  [data-bs-theme="dark"] .markdown-body .mermaid svg line,
+  [data-bs-theme="dark"] .markdown-body .mermaid svg polyline,
+  [data-bs-theme="dark"] .markdown-body .mermaid svg polygon,
+  .dark-mode .markdown-body .mermaid svg path,
+  .dark-mode .markdown-body .mermaid svg line,
+  .dark-mode .markdown-body .mermaid svg polyline,
+  .dark-mode .markdown-body .mermaid svg polygon {
+    stroke: #c9d1d9 !important;
+  }
+  [data-bs-theme="dark"] .markdown-body .mermaid svg marker path,
+  [data-bs-theme="dark"] .markdown-body .mermaid svg marker polygon,
+  .dark-mode .markdown-body .mermaid svg marker path,
+  .dark-mode .markdown-body .mermaid svg marker polygon {
+    fill: #c9d1d9 !important;
+    stroke: #c9d1d9 !important;
   }
 
   .docs-toc-column {
@@ -430,5 +754,12 @@
   .docs-toc-l2 { padding-left: 0.75rem; }
   .docs-toc-l3 { padding-left: 1.25rem; }
   .docs-toc-l4 { padding-left: 1.75rem; }
+
+  /* Footnotes */
+  .markdown-body .footnotes { margin-top: 2rem; padding-top: 1rem; border-top: 1px solid rgba(27,31,35,0.15); font-size: 0.9rem; color: #57606a; }
+  .markdown-body .footnote-ref { font-weight: 600; }
+  .markdown-body .footnote-backref { margin-left: 0.25rem; text-decoration: none; }
+  [data-bs-theme="dark"] .markdown-body .footnotes,
+  .dark-mode .markdown-body .footnotes { border-top-color: rgba(240,246,252,0.15); color: #8b949e; }
 {% endmacro %}
 

@@ -1,115 +1,188 @@
-# Организация документации в системе
+# Documentation Structure in Docs
 
-Документация в системе объединяется из нескольких **источников** (source) и отображается в едином интерфейсе плагина Docs (`/docs`): дерево категорий слева, просмотр документов и поиск.
-
----
-
-## 1. Источники документов
-
-Документы собираются из трёх типов источников (порядок фиксирован):
-
-| Источник | Папка | Отображаемое имя |
-|----------|--------|-------------------|
-| **Core (OsysHome)** | `<корень_проекта>/docs/` | OsysHome |
-| **Плагины (включая Docs)** | `plugins/<ИмяПлагина>/docs/` и корневые файлы плагина | Имя плагина |
-
-- **Core** — общая документация проекта (репозитория). Папка `docs/` в корне проекта; может содержать вложенные подпапки.
-- **Плагины (включая Docs)** — у каждого плагина (в том числе `Docs`) учитываются:
-  - все `.md` файлы в папке `plugins/<ИмяПлагина>/docs/` (включая вложенные папки);
-  - корневые файлы в каталоге плагина: `README.md`, `README.ru.md`, `GetStarted.md`, `GetStarted.ru.md`.
-
-Индекс строится **лениво** — при первом обращении к `/docs` или `/docs/search`, а также при нажатии «Refresh index» на странице `/admin/Docs`. Перестройка выполняется в фоновом потоке и не блокирует интерфейс; прогресс отображается на странице администратора.
+Docs collects Markdown documents from several sources and shows them in one interface at `/docs`. This guide explains where files should live, how localization works, and which Markdown features are supported by the plugin.
 
 ---
 
-## 2. Имена файлов и локализация
+## 1. Document Sources
 
-- **Файл по умолчанию (без языка):** `Name.md` — участвует в индексе как документ с «языком по умолчанию».
-- **Файл с языком:** `Name.XX.md`, где `XX` — код языка (например `ru`, `en`). Пример: `Users.ru.md`, `GetStarted.en.md`.
+Docs scans two source types in a fixed order:
 
-В интерфейсе для выбранного языка системы показывается **одна запись на «базовое имя»** (base_name): при наличии и `Users.md`, и `Users.ru.md` для русского будет показан `Users.ru.md`, для остальных — `Users.md` (как вариант по умолчанию).
+| Source | Directory | Display name |
+| --- | --- | --- |
+| Core (OsysHome) | `<project_root>/docs/` | OsysHome |
+| Plugins, including Docs | `plugins/<PluginName>/docs/` and selected root files | Plugin name |
 
-Заголовок документа берётся из первого заголовка уровня 1 в Markdown (`# Заголовок`), при его отсутствии — из имени файла.
+For each plugin, Docs indexes:
 
----
+- all `.md` files inside `plugins/<PluginName>/docs/`, including subdirectories;
+- root files `README.md`, `README.ru.md`, `GetStarted.md`, and `GetStarted.ru.md` when they exist.
 
-## 3. Категории в интерфейсе
-
-В левой панели на главной странице Docs отображаются **категории** — по одной на каждый источник, в котором есть хотя бы один документ:
-
-1. **OsysHome** — документы из `docs/` (иконка системы).
-2. **Имя плагина** (включая `Docs`) — документы конкретного плагина (иконка плагина из `plugins/<Имя>/static/<Имя>.png`).
-
-Иконки задаются по соглашению: у каждого модуля/плагина файл `static/<Имя>.png`; при отсутствии файла подставляется общая иконка.
+The index is built lazily on the first request to `/docs` or `/docs/search`. It can also be rebuilt from `/admin/Docs` with **Refresh index**. Rebuilds run in a background thread and do not block the UI.
 
 ---
 
-## 4. Ссылки между документами
+## 2. File Names and Localization
 
-При отображении Markdown обрабатываются ссылки на другие документы:
+- `Name.md` is the default document.
+- `Name.XX.md` is a localized document where `XX` is the language code, for example `ru` or `en`.
 
-- **Относительные ссылки на `.md`** — например `[Текст](other.md)` или `[Текст](subfolder/doc.md)` — преобразуются в ссылки внутри интерфейса Docs (открытие с деревом категорий).
-- Ссылки вида `docs/Name.md` из корня плагина (например из README) трактуются как документ `Name.md` в папке `docs/` этого же плагина.
+Docs shows one visible entry per base name. If both `Users.md` and `Users.ru.md` exist, Russian users see `Users.ru.md`, while other locales fall back to `Users.md` unless a better match exists.
 
-Внешние ссылки (с протоколом) и якоря (`#...`) не меняются.
+The document title is taken from the first level-1 heading (`# Title`). If there is no H1 heading, Docs uses the file name.
 
 ---
 
-## 5. Изображения в документах
+## 3. Categories in the UI
 
-Картинки в Markdown задаются относительными путями, например:
+The left sidebar groups files by source:
+
+1. `OsysHome` for files from the root `docs/` directory.
+2. A plugin category such as `Docs`, `Users`, or `Tuya` for plugin documentation.
+
+If a plugin provides `static/<PluginName>.png`, that file is used as the sidebar icon. Otherwise Docs falls back to a generic icon.
+
+---
+
+## 4. Links Between Documents
+
+Docs processes several link types during Markdown rendering:
+
+- Relative Markdown links such as `[Other](other.md)` or `[Guide](subfolder/doc.md)` are rewritten to internal Docs URLs.
+- Links like `docs/Name.md` from a plugin root file are treated as files inside that plugin's `docs/` folder.
+- External URLs with a protocol such as `https://example.com` stay external.
+- Title attributes are supported: `[Text](url "Tooltip")`.
+- Section anchors are supported: `[Jump](#section-name)`.
+
+Jekyll-style links inside Markdown links are also supported:
 
 ```markdown
-![Описание](images/screenshot.png)
-![Схема](./diagram.svg)
+[Open docs]({% link docs/DOCUMENTATION.md %})
 ```
-
-Такие пути при отображении **подменяются** на URL раздачи ресурсов Docs: файл ищется относительно каталога текущего документа в том же источнике (core, Docs или плагин). Поддерживаемые расширения: `.png`, `.jpg`, `.jpeg`, `.gif`, `.svg`, `.webp`, `.ico`, `.bmp`.
-
-Рекомендуется хранить изображения рядом с документом или в подпапке того же источника (например `docs/images/` в core, или `plugins/Tuya/docs/images/` в плагине).
 
 ---
 
-## 6. Поиск и кэш
+## 5. Images in Documentation
 
-- **Поиск** (`/docs/search`) выполняется через Whoosh FTS-индекс с морфологическими анализаторами для русского и английского языков. При отсутствии пакета `whoosh` поиск работает по подстроке в заголовке и отрывке.
-- Whoosh-индекс хранится в `cache/Docs/whoosh/` и перестраивается вместе с основным индексом.
-- Поиск поддерживает `?format=json` для возврата результатов в формате JSON (без HTML-страницы).
-- Содержимое документов рендерится в HTML с кэшированием; кэш сбрасывается при обновлении индекса («Refresh index»).
-- Диаграммы Mermaid (блоки кода ` ```mermaid `) автоматически рендерятся на стороне клиента через CDN mermaid.js.
+Basic syntax:
+
+```markdown
+![Alt text](images/screenshot.png)
+```
+
+Supported image scenarios:
+
+- local paths relative to the current document;
+- files from plugin `static/`, for example `../static/Docs.png`;
+- external URLs;
+- HTML `<img>` tags when you need explicit size or attributes.
+
+Supported extensions include `.png`, `.jpg`, `.jpeg`, `.gif`, `.svg`, `.webp`, `.ico`, and `.bmp`.
+
+It is best to keep images next to the document that uses them or in a nearby `images/` subfolder.
 
 ---
 
-## 7. Документация разработчика (pdoc)
+## 6. Search and Cache
 
-В панели администратора `/admin/Docs` доступна кнопка **Generate pdoc** — она запускает генерацию HTML-документации API из docstring'ов Python для всех активных плагинов и ядра системы. Результат сохраняется в папку `docs_dev/` и становится доступен по адресу `/docs_dev/`.
-
-Это удобно при разработке плагинов: позволяет просматривать публичное API классов и функций без выхода из браузера.
+- `/docs/search` uses a Whoosh full-text index when `whoosh` is installed.
+- Without Whoosh, Docs falls back to simpler substring matching.
+- Search results can be returned as JSON with `?format=json`.
+- Rendered HTML is cached in memory and invalidated when the index is rebuilt.
+- The Whoosh index is stored in `cache/Docs/whoosh/`.
 
 ---
 
-## 8. Краткая схема размещения
+## 7. Developer API Documentation
 
-```
-<корень_проекта>/
-├── docs/                          → категория "OsysHome"
-│   ├── index.md
-│   └── guides/
-│       └── Setup.md
-├── plugins/
-│   ├── Docs/
-│   │   ├── README.md              → категория "Docs" (корневой файл)
-│   │   ├── README.ru.md           → категория "Docs" (русский вариант)
-│   │   └── docs/                  → категория "Docs"
-│   │       ├── DOCUMENTATION.md   (этот файл)
-│   │       └── PLUGINS_guide.md
-│   └── Tuya/
-│       ├── README.md              → категория "Tuya" (корневой файл)
-│       ├── GetStarted.ru.md       → категория "Tuya" (корневой файл, ru)
-│       └── docs/
-│           ├── Users.md
-│           └── images/
-│               └── screen.png
+The admin page includes a **Generate pdoc** action. It generates HTML API documentation from Python docstrings for active plugins and the core project, stores the result in `docs_dev/`, and serves it at `/docs_dev/`.
+
+This is useful when you want browser-based API docs for plugin development without leaving the application.
+
+---
+
+## 8. Typical Layout
+
+```text
+<project_root>/
+|-- docs/                              -> "OsysHome" category
+|   |-- index.md
+|   `-- guides/
+|       `-- Setup.md
+`-- plugins/
+    |-- Docs/
+    |   |-- README.md
+    |   |-- README.ru.md
+    |   `-- docs/
+    |       |-- DOCUMENTATION.md
+    |       |-- DOCUMENTATION.ru.md
+    |       |-- MARKDOWN_SYNTAX_EXAMPLES.md
+    |       `-- MARKDOWN_SYNTAX_EXAMPLES.ru.md
+    `-- Tuya/
+        |-- README.md
+        |-- GetStarted.ru.md
+        `-- docs/
+            |-- Users.md
+            `-- images/
+                `-- screen.png
 ```
 
-Добавление или изменение `.md` в этих каталогах подхватывается при следующем обращении к `/docs` (первичная ленивая сборка индекса) или после нажатия «Refresh index» в `/admin/Docs`.
+When a file is added or changed in one of these locations, Docs picks it up on the next lazy index build or after **Refresh index** is triggered in `/admin/Docs`.
+
+---
+
+## 9. Supported Markdown Features
+
+Docs renders GitHub Flavored Markdown. For hands-on examples, see [MARKDOWN_SYNTAX_EXAMPLES.md](MARKDOWN_SYNTAX_EXAMPLES.md).
+
+### Text and Formatting
+
+| Element | Syntax |
+| --- | --- |
+| Headings | `#` to `######` |
+| Bold | `**text**` or `__text__` |
+| Italic | `*text*` or `_text_` |
+| Strikethrough | `~~text~~` |
+| Inline code | `` `code` `` |
+| Subscript | `H<sub>2</sub>O` |
+| Superscript | `x<sup>2</sup>` |
+| Underline | `<ins>text</ins>` |
+
+Line breaks are supported with two trailing spaces, a trailing `\`, or `<br/>`.
+
+### Lists
+
+- Unordered lists
+- Ordered lists
+- Task lists such as `- [x]` and `- [ ]`
+
+### Code Blocks
+
+- Plain fenced code blocks
+- Language-aware blocks with syntax highlighting such as `python`, `javascript`, `json`, `yaml`, `bash`, and `sql`
+
+### Tables
+
+GitHub Flavored Markdown tables are supported, including left, center, and right alignment.
+
+### Mermaid
+
+Docs renders `mermaid` code blocks on the client side. Common diagram types include:
+
+- `flowchart`
+- `sequenceDiagram`
+- `classDiagram`
+- `stateDiagram-v2`
+- `gantt`
+- `erDiagram`
+- `pie`
+
+### Alerts and Extras
+
+- Alerts such as `> [!NOTE]`, `> [!TIP]`, and `> [!WARNING]`
+- Footnotes
+- Color tokens in inline code
+- Horizontal rules
+- Inline HTML such as `<kbd>`, `<abbr>`, `<sub>`, `<sup>`, `<ins>`, and `<img>`
+- Escaped special characters
+- Hidden HTML comments

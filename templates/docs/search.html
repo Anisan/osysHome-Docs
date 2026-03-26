@@ -65,7 +65,9 @@
               </div>
             </form>
 
-            {% if query %}
+            {% if query and not index_ready %}
+              <p class="text-muted">{{ _('Search is temporarily unavailable while the index is being built.') }}</p>
+            {% elif query %}
               {% if results %}
                 <p class="text-muted small mb-3">{{ results|length }} {{ _('result(s)') }}</p>
                 <div class="list-group list-group-flush">
